@@ -52,7 +52,7 @@ def start_screen():
 
 tile_images = {'wall': load_image('dom1.jpg')}
 player_image1 = load_image('ralf_1.png')
-player_image = pygame.transform.scale(player_image1, (100, 50))
+player_image = pygame.transform.scale(player_image1, (-1000, +50))
 
 tile_width = 424
 tile_height = 114
