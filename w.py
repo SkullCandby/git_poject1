@@ -32,7 +32,7 @@ def load_level(filename):
 class Felix(pygame.sprite.Sprite):
     player_move_flag = 1
     def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(all_sprites)
+        super().__init__(player_group)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
@@ -57,6 +57,21 @@ class Felix(pygame.sprite.Sprite):
             self.image = self.frames[self.cur_frame]'''
 
 
+horizontal_borders = pygame.sprite.Group()
+vertical_borders = pygame.sprite.Group()
+class Border(pygame.sprite.Sprite):
+    # строго вертикальный или строго горизонтальный отрезок
+    def __init__(self, x1, y1, x2, y2):
+        super().__init__(all_sprites)
+        if x1 == x2:  # вертикальная стенка
+            self.add(vertical_borders)
+            self.image = pygame.Surface([1, y2 - y1])
+            self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
+        else:  # горизонтальная стенка
+            self.add(horizontal_borders)
+            self.image = pygame.Surface([x2 - x1, 1])
+            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
+
 
 flag = True
 tile_images = {'r_wall': load_image('right_wall.jpg'),
@@ -80,7 +95,7 @@ player_group = pygame.sprite.Group()
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(tiles_group, all_sprites)
+        super().__init__(tiles_group)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
@@ -122,11 +137,15 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h // 2 - h // 2)
 
 
+'''Border(42, 666, 42, 4)
+Border(42, 4, 522, 4)
+Border(522, 4, 522, 666)
+Border(522, 666, 42, 666)'''
 fon = load_image('earth.jpg')
-status = pygame.sprite.spritecollide(player_group, tiles_group, True)
-print(status)
+# status = pygame.sprite.spritecollide(all_sprites, tiles_group, True)
+# print(status)
 level_x, level_y = generate_level(load_level('ralf_map.txt'))
-player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 104, 475)
+player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 93, 615)
 camera = Camera()
 running = True
 hh = 640
@@ -139,29 +158,33 @@ while running:
             sys.exit()
         # if pygame.sprite.spritecollide(player_group, tiles_group, True):
         if keys[pygame.K_LEFT]:
-            player.rect.x -= 70
+            if player.rect.x - 70 > 44:
+                player.rect.x -= 70
         elif keys[pygame.K_RIGHT]:
             player.update()
-            player.rect.x += 70
-        elif keys[pygame.K_UP]:
+            if player.rect.x + 70 < 491:
+                player.rect.x += 70
+        if keys[pygame.K_UP]:
             hh += 114
-            player.rect.y -= 114
+            if player.rect.y - 114 > 0:
+                player.rect.y -= 114
         elif keys[pygame.K_DOWN]:
             hh -= 114
-            player.rect.y += 114
+            if player.rect.y + 114 < 665:
+                player.rect.y += 114
         if event.type == pygame.MOUSEBUTTONDOWN:
             print(pygame.mouse.get_pos())
     screen.fill((0, 0, 0))
     # start_screen()
-    camera.update(player)
+
 
     tiles_group.draw(screen)
-    all_sprites.draw(screen)
+
     for sprite in all_sprites:
         camera.apply(sprite)
     player_group.draw(screen)
 
-    screen.blit(fon, (0, hh))
-    pygame.time.delay(150)
+    screen.blit(fon, (0, 666))
+    camera.update(player)
     pygame.display.flip()
 pygame.quit()
