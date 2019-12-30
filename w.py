@@ -28,11 +28,6 @@ def load_level(filename):
     print(list(map(lambda x: x.ljust(max_width, '.'), level_map)))
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
-flag_moove = True
-def terminate():
-    pygame.quit()
-    sys.exit()
-
 
 class AnimatedSprite(pygame.sprite.Sprite):
     player_move_flag = 1
@@ -42,10 +37,10 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
         self.rect.x = x
         self.rect.y = y
-        self.mask = pygame.mask.from_surface(self.image)
-
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
                                 sheet.get_height() // rows)
@@ -89,19 +84,7 @@ class Tile(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect.x = pos_x
-        self.rect.y = pos_y
 
-
-class Player(pygame.sprite.Sprite):
-    player_move_flag = True
-    def __init__(self, pos_x, pos_y):
-        super().__init__(player_group, all_sprites)
-        self.image = player_image
-        self.rect = self.image.get_rect()
-        # self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
-        self.rect.x = 422
-        self.rect.y = 501
 def generate_level(level):
     new_player, x, y = None, None, None
     for y in range(len(level)):
@@ -109,7 +92,6 @@ def generate_level(level):
             if level[y][x] == '#':
                 Tile('nefull_window', x, y)
             elif level[y][x] == '@':
-                player = AnimatedSprite(load_image("felix_move_spritelist.png"), 3, 1, 697, 475)
                 Tile('full_window', x, y)
                 '''new_player = Player(x, y)'''
             elif level[y][x] == '|':
@@ -141,11 +123,10 @@ class Camera:
 
 
 fon = load_image('earth.jpg')
-
+a = pygame.sprite.spritecollide(player_group, tiles_group, True)
+print(a)
 level_x, level_y = generate_level(load_level('ralf_map.txt'))
-player = AnimatedSprite(load_image("felix_move_spritelist.png"), 2, 1, 697, 475)
-'''player.rect.x = 486
-player.rect. = 561'''
+player = AnimatedSprite(load_image("felix_move_spritelist.png"), 2, 1, 104, 475)
 camera = Camera()
 running = True
 hh = 640
@@ -156,22 +137,22 @@ while running:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if pygame.sprite.collide_mask(player_group, tiles_group):
-            if keys[pygame.K_LEFT]:
-                player.rect.x -= 70
-            elif keys[pygame.K_RIGHT]:
-                AnimatedSprite.player_move_flag = True
-                player.update()
-                player.rect.x += 70
-                AnimatedSprite.player_move_flag = False
-            elif keys[pygame.K_UP]:
-                hh += 114
-                player.rect.y -= 114
-            elif keys[pygame.K_DOWN]:
-                hh -= 114
-                player.rect.y += 114
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                print(pygame.mouse.get_pos())
+        # if pygame.sprite.spritecollide(player_group, tiles_group, True):
+        if keys[pygame.K_LEFT]:
+            player.rect.x -= 70
+        elif keys[pygame.K_RIGHT]:
+            AnimatedSprite.player_move_flag = True
+            player.update()
+            player.rect.x += 70
+            AnimatedSprite.player_move_flag = False
+        elif keys[pygame.K_UP]:
+            hh += 114
+            player.rect.y -= 114
+        elif keys[pygame.K_DOWN]:
+            hh -= 114
+            player.rect.y += 114
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            print(pygame.mouse.get_pos())
     screen.fill((0, 0, 0))
     # start_screen()
     camera.update(player)
