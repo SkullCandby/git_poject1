@@ -29,7 +29,7 @@ def load_level(filename):
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
-class AnimatedSprite(pygame.sprite.Sprite):
+class Felix(pygame.sprite.Sprite):
     player_move_flag = 1
     def __init__(self, sheet, columns, rows, x, y):
         super().__init__(all_sprites)
@@ -123,10 +123,10 @@ class Camera:
 
 
 fon = load_image('earth.jpg')
-a = pygame.sprite.spritecollide(player_group, tiles_group, True)
-print(a)
+status = pygame.sprite.spritecollide(player_group, tiles_group, True)
+print(status)
 level_x, level_y = generate_level(load_level('ralf_map.txt'))
-player = AnimatedSprite(load_image("felix_move_spritelist.png"), 2, 1, 104, 475)
+player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 104, 475)
 camera = Camera()
 running = True
 hh = 640
@@ -141,10 +141,8 @@ while running:
         if keys[pygame.K_LEFT]:
             player.rect.x -= 70
         elif keys[pygame.K_RIGHT]:
-            AnimatedSprite.player_move_flag = True
             player.update()
             player.rect.x += 70
-            AnimatedSprite.player_move_flag = False
         elif keys[pygame.K_UP]:
             hh += 114
             player.rect.y -= 114
