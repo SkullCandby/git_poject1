@@ -46,13 +46,13 @@ class Tile(pygame.sprite.Sprite):
 lvl = load_level('ralf_map.txt')
 print(lvl)
 
-class Window:
+'''class Window:
     def __init__(self, lst, status):
         self.lvl = lst
         self.status = ''
     def compile(self):
         for i in range(len(self.lvl)):
-            for j in range(len(self.lvl[i])):
+            for j in range(len(self.lvl[i])):'''
 
 class Felix(pygame.sprite.Sprite):
     player_move_flag = False
@@ -181,6 +181,7 @@ while running:
                 player.rect.y += 114
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.fix(player.rect.x, player.rect.y)
+            print(lvl)
             print(pygame.mouse.get_pos())
     screen.fill((0, 0, 0))
     # start_screen()
