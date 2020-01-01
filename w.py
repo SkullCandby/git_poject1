@@ -76,17 +76,35 @@ class Felix(pygame.sprite.Sprite):
 
         self.image = self.frames[self.cur_frame]
         # Felix.player_move_flag = False
-print(lvl)
-def fix(coords):
+
+
+window_sprite = pygame.sprite.Group()
+
+
+'''class Window(pygame.sprite.Sprite):
+    def __init__(self, lvl):
+        super().__init__(window_sprite)
+        self.lvl = lvl
+        self.rendered_lvl = []
+    def render(self, lvl):
+        for i in range(len(lvl)):
+            for j in range(len(lvl[i]))'''
+
+
+def fix(pos_x, pos_y):
     global lvl
-    x = coords[0] // 71
-    y = coords[1] // 114
+    x = pos_x // 71
+    y = pos_y // 114
     if lvl[y][x] == '#':
-        # print(lvl[y][x])
-        Tile('full_window', x, y)
-        # lvl[y][x] = '.'
-    elif lvl[y][x] == '%':
         Tile('damaged_window', x, y)
+        s = lvl[y]
+        b = s[:x] + '%' + s[x + 1:]
+        lvl[y] = b
+    elif lvl[y][x] == '%':
+        Tile('full_window', x, y)
+        s = lvl[y]
+        b = s[:x] + '.' + s[x + 1:]
+        lvl[y] = b
 
 
 horizontal_borders = pygame.sprite.Group()
@@ -187,8 +205,7 @@ while running:
             if player.rect.y + 114 < 665:
                 player.rect.y += 114
         if event.type == pygame.MOUSEBUTTONDOWN:
-            fix(event.pos)
-            print(fix(event.pos))
+            fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
     screen.fill((0, 0, 0))
     # start_screen()
@@ -196,7 +213,7 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
     player_group.draw(screen)
-    screen.blit(fon, (0, 666))
+    screen.blit(fon, (0, 684))
     camera.update(player)
 
     pygame.display.flip()
