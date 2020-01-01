@@ -46,12 +46,20 @@ class Tile(pygame.sprite.Sprite):
 lvl = load_level('ralf_map.txt')
 print(lvl)
 
+class Window:
+    def __init__(self, lst, status):
+        self.lvl = lst
+        self.status = ''
+    def compile(self):
+        for i in range(len(self.lvl)):
+            for j in range(len(self.lvl[i])):
 
 class Felix(pygame.sprite.Sprite):
     player_move_flag = False
 
-    def __init__(self, sheet, columns, rows, x, y):
+    def __init__(self, sheet, columns, rows, x, y, lvl):
         super().__init__(player_group)
+        self.lvl = lvl
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
@@ -77,54 +85,21 @@ class Felix(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
         # Felix.player_move_flag = False
 
-
+    def fix(self, pos_x, pos_y):
+        lvl = self.lvl
+        x = pos_x // 71
+        y = pos_y // 114
+        if lvl[y][x] == '#':
+            Tile('damaged_window', x, y)
+            s = lvl[y]
+            b = s[:x] + '%' + s[x + 1:]
+            lvl[y] = b
+        elif lvl[y][x] == '%':
+            Tile('full_window', x, y)
+            s = lvl[y]
+            b = s[:x] + '.' + s[x + 1:]
+            lvl[y] = b
 window_sprite = pygame.sprite.Group()
-
-
-'''class Window(pygame.sprite.Sprite):
-    def __init__(self, lvl):
-        super().__init__(window_sprite)
-        self.lvl = lvl
-        self.rendered_lvl = []
-    def render(self, lvl):
-        for i in range(len(lvl)):
-            for j in range(len(lvl[i]))'''
-
-
-def fix(pos_x, pos_y):
-    global lvl
-    x = pos_x // 71
-    y = pos_y // 114
-    if lvl[y][x] == '#':
-        Tile('damaged_window', x, y)
-        s = lvl[y]
-        b = s[:x] + '%' + s[x + 1:]
-        lvl[y] = b
-    elif lvl[y][x] == '%':
-        Tile('full_window', x, y)
-        s = lvl[y]
-        b = s[:x] + '.' + s[x + 1:]
-        lvl[y] = b
-
-
-horizontal_borders = pygame.sprite.Group()
-vertical_borders = pygame.sprite.Group()
-
-
-class Border(pygame.sprite.Sprite):
-    # строго вертикальный или строго горизонтальный отрезок
-    def __init__(self, x1, y1, x2, y2):
-        super().__init__(all_sprites)
-        if x1 == x2:  # вертикальная стенка
-            self.add(vertical_borders)
-            self.image = pygame.Surface([1, y2 - y1])
-            self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
-        else:  # горизонтальная стенка
-            self.add(horizontal_borders)
-            self.image = pygame.Surface([x2 - x1, 1])
-            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
-
-
 flag = True
 
 player_image1 = load_image('ralf_2.gif')
@@ -179,7 +154,7 @@ class Camera:
 
 fon = load_image('earth.jpg')
 level_x, level_y = generate_level(load_level('ralf_map.txt'))
-player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 93, 615)
+player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 93, 615, lvl)
 camera = Camera()
 running = True
 hh = 640
@@ -205,7 +180,7 @@ while running:
             if player.rect.y + 114 < 665:
                 player.rect.y += 114
         if event.type == pygame.MOUSEBUTTONDOWN:
-            fix(player.rect.x, player.rect.y)
+            player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
     screen.fill((0, 0, 0))
     # start_screen()
