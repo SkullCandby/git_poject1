@@ -39,12 +39,11 @@ class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group)
         self.image = tile_images[tile_type]
-        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        self.rect = self.image.get_rect().move(tile_width * pos_x + 200, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
 
 
 lvl = load_level('ralf_map.txt')
-print(lvl)
 
 '''class Window:
     def __init__(self, lst, status):
@@ -53,6 +52,7 @@ print(lvl)
     def compile(self):
         for i in range(len(self.lvl)):
             for j in range(len(self.lvl[i])):'''
+
 
 class Felix(pygame.sprite.Sprite):
     player_move_flag = False
@@ -87,7 +87,7 @@ class Felix(pygame.sprite.Sprite):
 
     def fix(self, pos_x, pos_y):
         lvl = self.lvl
-        x = pos_x // 71
+        x = (pos_x - 200) // 71
         y = pos_y // 114
         if lvl[y][x] == '#':
             Tile('damaged_window', x, y)
@@ -99,8 +99,31 @@ class Felix(pygame.sprite.Sprite):
             s = lvl[y]
             b = s[:x] + '.' + s[x + 1:]
             lvl[y] = b
+
+
+class lvl_class:
+    lst = []
+    lst2 = lvl
+    dd = {}
+    def __init__(self, lvl):
+        self.lvl = lvl
+        self.flag = 0
+        self.counter = 0
+    def check_lvl(self, pos_x, pos_y):
+        print(pos_x, pos_y)
+        y = pos_x // 114
+        x = pos_y - 200 // 71
+        if self.lvl[y] == '(......)' or self.lvl[y] == '(@.....)':
+            self.counter += 1
+            print(self.lvl[y])
+            lvl_class.dd[x, y, self.counter] = True
+            lvl_class.lst.append(True)
+
+
+level = lvl_class(lvl)
+
+flag = False
 window_sprite = pygame.sprite.Group()
-flag = True
 
 player_image1 = load_image('ralf_2.gif')
 player_image = pygame.transform.scale(player_image1, (187, 87))
@@ -154,7 +177,7 @@ class Camera:
 
 fon = load_image('earth.jpg')
 level_x, level_y = generate_level(load_level('ralf_map.txt'))
-player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 93, 615, lvl)
+player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 293, 615, lvl)
 camera = Camera()
 running = True
 hh = 640
@@ -166,10 +189,10 @@ while running:
             pygame.quit()
             sys.exit()
         if keys[pygame.K_LEFT]:
-            if player.rect.x - 70 > 44:
+            if player.rect.x - 70 > 244:
                 player.rect.x -= 70
         elif keys[pygame.K_RIGHT]:
-            if player.rect.x + 70 < 491:
+            if player.rect.x + 70 < 691:
                 player.rect.x += 70
         if keys[pygame.K_UP]:
             hh += 114
@@ -180,9 +203,11 @@ while running:
             if player.rect.y + 114 < 665:
                 player.rect.y += 114
         if event.type == pygame.MOUSEBUTTONDOWN:
+            level.check_lvl(player.rect.x, player.rect.y)
             player.fix(player.rect.x, player.rect.y)
-            print(lvl)
-            print(pygame.mouse.get_pos())
+            '''print(len(lvl_class.dd))'''
+            print(lvl_class.dd)
+
     screen.fill((0, 0, 0))
     # start_screen()
     tiles_group.draw(screen)
@@ -191,8 +216,12 @@ while running:
     player_group.draw(screen)
     screen.blit(fon, (0, 684))
     camera.update(player)
-
-    pygame.display.flip()
     player.update()
+
+    if len(lvl_class.dd) == 5:
+
+        screen.blit(load_image('game_over.jpg'), (0, 0))
+    pygame.display.flip()
+
     # pygame.time.delay(250)
 pygame.quit()
