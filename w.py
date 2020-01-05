@@ -34,6 +34,12 @@ tile_images = {'r_wall': load_image('right_wall.jpg'),
                'damaged_window': load_image('damaged_okno.jpg'),
                'nefull_window': load_image('nefull_okno.jpg')}
 
+tiles_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
+
+tiles_group2 = pygame.sprite.Group()
+player_group2 = pygame.sprite.Group()
+
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
@@ -90,37 +96,51 @@ class Felix(pygame.sprite.Sprite):
         x = (pos_x - 200) // 71
         y = pos_y // 114
         if lvl[y][x] == '#':
-            Tile('damaged_window', x, y)
             s = lvl[y]
             b = s[:x] + '%' + s[x + 1:]
             lvl[y] = b
+            Tile('damaged_window', x, y)
         elif lvl[y][x] == '%':
-            Tile('full_window', x, y)
             s = lvl[y]
             b = s[:x] + '.' + s[x + 1:]
             lvl[y] = b
+            Tile('full_window', x, y)
+
+
+    def next_lvl(self):
+        player_group.empty()
 
 
 class lvl_class:
     lst = []
     lst2 = lvl
     dd = {}
+
     def __init__(self, lvl):
         self.lvl = lvl
         self.flag = 0
         self.counter = 0
-    def check_lvl(self, pos_x, pos_y):
-        print(pos_x, pos_y)
+
+    '''def check_lvl(self, pos_x, pos_y):
         y = pos_x // 114
         x = pos_y - 200 // 71
         if self.lvl[y] == '(......)' or self.lvl[y] == '(@.....)':
             self.counter += 1
-            print(self.lvl[y])
             lvl_class.dd[x, y, self.counter] = True
-            lvl_class.lst.append(True)
+            lvl_class.lst.append(True)'''
 
+    def check_lvl(self):
+        stroka = ''
+        for i in range(len(self.lvl)):
+            stroka += self.lvl[i]
+        if stroka == '(......)(......)(......)(......)(@.....)(......)':
+            return True
 
-level = lvl_class(lvl)
+def move_lvl(main_sprite):
+    for sprite in main_sprite:
+        sprite.rect.y = sprite.rect.y + 114
+        pygame.time.delay(10)
+
 
 flag = False
 window_sprite = pygame.sprite.Group()
@@ -133,10 +153,6 @@ tile_height = 114
 wall_width = 39
 wall_height = 112
 player = None
-
-all_sprites = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
 
 
 def generate_level(level):
@@ -175,12 +191,15 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h // 2 - h // 2)
 
 
+'''level2_x, level2_y = generate_level(load_level('ralf_map2.txt'))'''
+level = lvl_class(lvl)
 fon = load_image('earth.jpg')
 level_x, level_y = generate_level(load_level('ralf_map.txt'))
+print(level_x, level_y)
 player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 293, 615, lvl)
 camera = Camera()
 running = True
-hh = 640
+hh = 684
 clock = pygame.time.Clock()
 while running:
     keys = pygame.key.get_pressed()
@@ -195,15 +214,13 @@ while running:
             if player.rect.x + 70 < 691:
                 player.rect.x += 70
         if keys[pygame.K_UP]:
-            hh += 114
             if player.rect.y - 114 > 0:
                 player.rect.y -= 114
         elif keys[pygame.K_DOWN]:
-            hh -= 114
             if player.rect.y + 114 < 665:
                 player.rect.y += 114
         if event.type == pygame.MOUSEBUTTONDOWN:
-            level.check_lvl(player.rect.x, player.rect.y)
+            print(level.check_lvl())
             player.fix(player.rect.x, player.rect.y)
             '''print(len(lvl_class.dd))'''
             print(lvl_class.dd)
@@ -214,13 +231,16 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
     player_group.draw(screen)
-    screen.blit(fon, (0, 684))
+    screen.blit(fon, (0, hh))
     camera.update(player)
     player.update()
+    a = level.check_lvl()
+    if a:
+        player.next_lvl()
+        move_lvl(tiles_group)
+        hh += 114
 
-    if len(lvl_class.dd) == 5:
-
-        screen.blit(load_image('game_over.jpg'), (0, 0))
+        # screen.blit(load_image('game_over.jpg'), (0, 0))
     pygame.display.flip()
 
     # pygame.time.delay(250)
