@@ -94,9 +94,11 @@ class Ralf(pygame.sprite.Sprite):
                 self.rect.y -= 141
                 pygame.time.delay(100)
                 if damaged_window > 0:
+                    print(damaged_window)
                     self.rect.x -= 10 * damaged_window
                     pygame.time.delay(100)
                 elif empty_window > 0:
+                    print(empty_window)
                     self.rect.x -= 10 * empty_window
 
         Ralf.move_flag = False
@@ -282,7 +284,7 @@ while running:
             if player.rect.y + 114 < 665:
                 player.rect.y += 114
         if event.type == pygame.MOUSEBUTTONDOWN:
-
+            ralf.move_ralf()
             player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
             '''print(len(lvl_class.dd))'''
@@ -295,7 +297,7 @@ while running:
     player_group.draw(screen)
 
     ralf_sprite.draw(screen)
-    ralf.move_ralf()
+
     screen.blit(fon, (0, hh))
     camera.update(player)
     player.update()
