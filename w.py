@@ -23,19 +23,32 @@ def load_level(filename):
     filename = "data/" + filename
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-
     max_width = max(map(len, level_map))
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+    lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[:6]
+    return lst
 
+
+def load_ralf_way(filename):
+    filename = "data/" + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[7:-1]
+    return lst
+
+
+ralf_sprite = pygame.sprite.Group()
+ralf_pic = load_image('mar.png')
 
 tile_images = {'r_wall': load_image('right_wall.jpg'),
                'l_wall': load_image('left_wall.jpg'),
                'full_window': load_image('full_okno.jpg'),
                'damaged_window': load_image('damaged_okno.jpg'),
-               'nefull_window': load_image('nefull_okno.jpg')}
-
+               'nefull_window': load_image('nefull_okno.jpg'),
+               'ralf': load_image('mar.png')}
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
+all_sprites = pygame.sprite.Group()
 
 tiles_group2 = pygame.sprite.Group()
 player_group2 = pygame.sprite.Group()
@@ -47,6 +60,35 @@ class Tile(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x + 200, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
+
+
+class Ralf(pygame.sprite.Sprite):
+    def __init__(self, tile_type):
+        super().__init__(ralf_sprite)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(200, 600)
+        self.ralf_way = load_ralf_way('ralf_map.txt')
+        self.ralf_way.reverse()
+
+    def move_ralf(self):
+        ralf_sprite.img = self.image
+        for y in range(len(self.ralf_way)):
+            for x in range(len(self.ralf_way[y])):
+
+                if x <= 4:
+                    if self.ralf_way[y][x + 1] == '-':
+                        # print(self.ralf_way[y])
+                        self.rect.x += 71
+                        pygame.time.delay(10)
+                    if x - 1 >= 0:
+
+                        if self.ralf_way[y][x - 1] == '-':
+                            self.rect.x -= 71
+                    else:
+                        if y + 1 <= 3:
+                            if self.ralf_way[y + 1][x] == '-':
+                                self.rect.y -= 114
+                pygame.time.delay(10)
 
 
 lvl = load_level('ralf_map.txt')
@@ -106,7 +148,6 @@ class Felix(pygame.sprite.Sprite):
             lvl[y] = b
             Tile('full_window', x, y)
 
-
     def next_lvl(self):
         player_group.empty()
 
@@ -135,6 +176,7 @@ class lvl_class:
             stroka += self.lvl[i]
         if stroka == '(......)(......)(......)(......)(@.....)(......)':
             return True
+
 
 def move_lvl(main_sprite):
     for sprite in main_sprite:
@@ -177,6 +219,14 @@ def generate_level(level):
     return x, y
 
 
+def generate_ralf_way(level):
+    x, y = None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '&':
+                Ralf('ralf')
+    return x, y
+
 class Camera:
     def __init__(self):
         self.dx = 0
@@ -195,7 +245,8 @@ class Camera:
 level = lvl_class(lvl)
 fon = load_image('earth.jpg')
 level_x, level_y = generate_level(load_level('ralf_map.txt'))
-print(level_x, level_y)
+ralf_x, ralf_y = generate_ralf_way(load_ralf_way('ralf_map.txt'))
+print(ralf_x, ralf_y)
 player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 293, 615, lvl)
 camera = Camera()
 running = True
@@ -220,10 +271,8 @@ while running:
             if player.rect.y + 114 < 665:
                 player.rect.y += 114
         if event.type == pygame.MOUSEBUTTONDOWN:
-            print(level.check_lvl())
             player.fix(player.rect.x, player.rect.y)
             '''print(len(lvl_class.dd))'''
-            print(lvl_class.dd)
 
     screen.fill((0, 0, 0))
     # start_screen()
@@ -231,6 +280,7 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
     player_group.draw(screen)
+    ralf_sprite.draw(screen)
     screen.blit(fon, (0, hh))
     camera.update(player)
     player.update()
