@@ -77,13 +77,41 @@ class Ralf(pygame.sprite.Sprite):
         self.ralf_start_x = 5
         self.set = set()
     def move_ralf(self):
-        ralf_way = lvl[-1::-1]
-        for y in range(len(ralf_way)):
-            if y + 1 <= 5:
-                if '%' in ralf_way[y + 1] or '#' in ralf_way[y + 1]:
-                    self.rect.y -= v * clock.tick() / 1000
+        if Ralf.move_flag:
+            for y in range(len(self.ralf_way)):
+                for x in range(len(self.ralf_way[y])):
+                    if '#' in self.ralf_way[y]:
+                        self.set.add(y)
 
-                    print(self.rect.y)
+                    elif '%' in self.ralf_way[y]:
+                        self.set.add(y)
+        ralf_way = lvl[-1::-1]
+
+        for y in range(len(lvl)):
+            if y + 1 <= 5:
+                if '%' in lvl[y + 1] or '#' in lvl[y + 1]:
+                    if lvl[y].find('%') > -1:
+                        while self.rect.x != lvl[y].find('#') * 71:
+                            self.rect.x -= 114 * clock.tick() / 1000
+                    self.rect.y -= 114 * clock.tick() / 1000
+'''    def move_ralf(self):
+        if Ralf.move_flag:
+            for y in range(len(self.ralf_way)):
+                for x in range(len(self.ralf_way[y])):
+                    if '#' in self.ralf_way[y]:
+                        self.set.add(y)
+
+                    elif '%' in self.ralf_way[y]:
+
+                        self.set.add(y)
+        lst = list(self.set)
+        print(lst)
+        for i in range(len(lvl)):
+            while '%' not in lvl[i] and '#' not in lvl[i]:
+
+                self.rect.y -= v * clock.tick() / 1000
+        Ralf.move_flag = False'''
+
                     # pygame.time.delay(100)
 '''print(load_ralf_way('ralf_map.txt'))'''
 '''class Window:
@@ -278,8 +306,9 @@ while running:
         camera.apply(sprite)
     player_group.draw(screen)
 
-    ralf.move_ralf()
+
     ralf_sprite.draw(screen)
+    ralf.move_ralf()
     screen.blit(fon, (0, hh))
     camera.update(player)
     player.update()
