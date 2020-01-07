@@ -7,6 +7,8 @@ size = w, h = 1000, 1000
 screen = pygame.display.set_mode(size)
 v = 10
 clock = pygame.time.Clock()
+
+
 def load_image(name, color_key=None):
     fullname = os.path.join('data', name)
     image = pygame.image.load(fullname).convert()
@@ -66,8 +68,27 @@ class Tile(pygame.sprite.Sprite):
 lvl = load_level('ralf_map.txt')
 
 
-class Ralf(pygame.sprite.Sprite):
+class Persona(pygame.sprite.Sprite):
+    def moveLeft(self):
+        if self.rect.x - 70 > 244:
+            self.rect.x -= 70
+
+    def moveRight(self):
+        if self.rect.x + 70 < 691:
+            self.rect.x += 70
+
+    def moveUp(self):
+        if self.rect.y - 114 > 0:
+            self.rect.y -= 114
+
+    def moveDown(self):
+        if self.rect.y + 114 < 665:
+            self.rect.y += 114
+
+
+class Ralf(Persona):
     move_flag = True
+
     def __init__(self, tile_type):
         super().__init__(ralf_sprite)
         self.image = tile_images[tile_type]
@@ -75,25 +96,21 @@ class Ralf(pygame.sprite.Sprite):
         self.ralf_way = load_level('ralf_map.txt')
         self.ralf_line = 5
         self.ralf_start_x = 5
+        self.front_flag = True
         self.set = set()
+        self.v = 114
+
     def move_ralf(self):
-        if Ralf.move_flag:
-            for y in range(len(self.ralf_way)):
-                for x in range(len(self.ralf_way[y])):
-                    if '#' in self.ralf_way[y]:
-                        self.set.add(y)
-
-                    elif '%' in self.ralf_way[y]:
-                        self.set.add(y)
         ralf_way = lvl[-1::-1]
+        print(ralf_way)
+        for y in range(len(ralf_way)):
+            if '%' not in ralf_way[y] and '#' not in ralf_way[y]:
+                self.rect.y -= self.v * clock.tick() / 1000
+            if ralf_way[y].find('%') > -1 or ralf_way[y].find('#') > -1:
+                # print(ralf_way[y].find('%'), ralf_way[y].find('#'), ralf_way[y], y)
+                self.v = 0
 
-        for y in range(len(lvl)):
-            if y + 1 <= 5:
-                if '%' in lvl[y + 1] or '#' in lvl[y + 1]:
-                    if lvl[y].find('%') > -1:
-                        while self.rect.x != lvl[y].find('#') * 71:
-                            self.rect.x -= 114 * clock.tick() / 1000
-                    self.rect.y -= 114 * clock.tick() / 1000
+
 '''    def move_ralf(self):
         if Ralf.move_flag:
             for y in range(len(self.ralf_way)):
@@ -112,7 +129,7 @@ class Ralf(pygame.sprite.Sprite):
                 self.rect.y -= v * clock.tick() / 1000
         Ralf.move_flag = False'''
 
-                    # pygame.time.delay(100)
+# pygame.time.delay(100)
 '''print(load_ralf_way('ralf_map.txt'))'''
 '''class Window:
     def __init__(self, lst, status):
@@ -123,7 +140,7 @@ class Ralf(pygame.sprite.Sprite):
             for j in range(len(self.lvl[i])):'''
 
 
-class Felix(pygame.sprite.Sprite):
+class Felix(Persona):
     player_move_flag = False
 
     def __init__(self, sheet, columns, rows, x, y, lvl):
@@ -251,6 +268,8 @@ class Camera:
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - w // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - h // 2)
+
+
 text_flag = True
 '''def draw_text():
     global text_flag
@@ -274,7 +293,6 @@ camera = Camera()
 running = True
 hh = 684
 
-
 while running:
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
@@ -282,19 +300,15 @@ while running:
             pygame.quit()
             sys.exit()
         if keys[pygame.K_LEFT]:
-            if player.rect.x - 70 > 244:
-                player.rect.x -= 70
+            player.moveLeft()
         elif keys[pygame.K_RIGHT]:
-            if player.rect.x + 70 < 691:
-                player.rect.x += 70
+            player.moveRight()
         if keys[pygame.K_UP]:
-            if player.rect.y - 114 > 0:
-                player.rect.y -= 114
+            player.moveUp()
         elif keys[pygame.K_DOWN]:
-            if player.rect.y + 114 < 665:
-                player.rect.y += 114
+            player.moveDown()
         if event.type == pygame.MOUSEBUTTONDOWN:
-
+            ralf.move_ralf()
             player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
             '''print(len(lvl_class.dd))'''
@@ -306,9 +320,8 @@ while running:
         camera.apply(sprite)
     player_group.draw(screen)
 
-
     ralf_sprite.draw(screen)
-    ralf.move_ralf()
+
     screen.blit(fon, (0, hh))
     camera.update(player)
     player.update()
