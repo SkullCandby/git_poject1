@@ -7,6 +7,7 @@ size = w, h = 1000, 1000
 screen = pygame.display.set_mode(size)
 v = 10
 clock = pygame.time.Clock()
+fps = 60
 
 
 def load_image(name, color_key=None):
@@ -40,7 +41,6 @@ def load_ralf_way(filename):
     return lst
 '''
 
-ralf_sprite = pygame.sprite.Group()
 ralf_pic = load_image('mar.png')
 
 tile_images = {'r_wall': load_image('right_wall.jpg'),
@@ -69,6 +69,9 @@ lvl = load_level('ralf_map.txt')
 
 
 class Persona(pygame.sprite.Sprite):
+    change_x = 0
+    change_y = 0
+
     def moveLeft(self):
         if self.rect.x - 70 > 244:
             self.rect.x -= 70
@@ -91,6 +94,26 @@ class Persona(pygame.sprite.Sprite):
         if self.rect.y + 114 < 665:
             self.rect.y += 114
 
+    def changespeed(self, x, y):
+        Persona.change_x += x
+        Persona.change_y += y
+
+
+    def reset(self):
+        self.rect.x += self.change_x
+        self.rect.y += self.change_y
+        if self.rect.left > 270:
+            self.rect.left = 0
+        elif self.rect.right < 697:
+            self.rect.right = 800
+        elif self.rect.top <= 0:
+            self.rect.top = 0
+        elif self.rect.bottom >= 600:
+            self.rect.bottom = 600
+
+
+ralf_sprite = pygame.sprite.Group()
+
 
 class Ralf(Persona):
     move_flag = True
@@ -107,18 +130,17 @@ class Ralf(Persona):
         self.v = 114
 
     def breakWindow(self, window_status):
-       ''' if window_status == '.':
-            pygame.time.delay(100)
-        elif window_status == '%':
-            pygame.time.delay(200)
-        elif window_status == '#':
-            pygame.time.delay(400)'''
+        ''' if window_status == '.':
+             pygame.time.delay(100)
+         elif window_status == '%':
+             pygame.time.delay(200)
+         elif window_status == '#':
+             pygame.time.delay(400)'''
 
     def move_ralf(self):
         ralf_way = lvl[-1::-1]
-        print(ralf_way)
         for y in range(len(ralf_way) - 1):
-            if y//2 == 0:
+            if y // 2 == 0:
                 row = list(ralf_way[y])
                 z = 0
                 while not ralf.reachLeft():
@@ -301,16 +323,28 @@ while running:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if keys[pygame.K_LEFT]:
-            player.moveLeft()
-        elif keys[pygame.K_RIGHT]:
-            player.moveRight()
-        if keys[pygame.K_UP]:
-            player.moveUp()
-        elif keys[pygame.K_DOWN]:
-            player.moveDown()
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                player.changespeed(-71, 0)
+            elif event.key == pygame.K_RIGHT:
+                player.changespeed(71, 0)
+            elif event.key == pygame.K_UP:
+                player.changespeed(0, -71)
+            elif event.key == pygame.K_DOWN:
+                player.changespeed(0, 71)
 
+            # Reset speed when key goes up
+
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT:
+                player.changespeed(71, 0)
+            elif event.key == pygame.K_RIGHT:
+                player.changespeed(71, 0)
+            elif event.key == pygame.K_UP:
+                player.changespeed(0, 71)
+            elif event.key == pygame.K_DOWN:
+                player.changespeed(0, 71)
+        if event.type == pygame.MOUSEBUTTONDOWN:
             player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
             '''print(len(lvl_class.dd))'''
@@ -327,13 +361,14 @@ while running:
     screen.blit(fon, (0, hh))
     camera.update(player)
     player.update()
+    player.reset()
     a = level.check_lvl()
     if a:
         # draw_text()
         player.next_lvl()
         move_lvl(tiles_group)
         hh += 114
-
+    clock.tick(60)
         # screen.blit(load_image('game_over.jpg'), (0, 0))
     pygame.display.flip()
 
