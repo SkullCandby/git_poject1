@@ -102,14 +102,15 @@ class Persona(pygame.sprite.Sprite):
     def reset(self):
         self.rect.x += self.change_x
         self.rect.y += self.change_y
-        if self.rect.left > 270:
-            self.rect.left = 0
-        elif self.rect.right < 697:
-            self.rect.right = 800
-        elif self.rect.top <= 0:
+        clock.tick(fps)
+        if self.rect.x - 70 > 244:
+            self.rect.left = 244
+        if self.rect.x + 70 < 691:
+            self.rect.x = 691
+        if self.rect.y - 114 > 0:
             self.rect.top = 0
-        elif self.rect.bottom >= 600:
-            self.rect.bottom = 600
+        if self.rect.y + 114 < 665:
+            self.rect.bottom = 665
 
 
 ralf_sprite = pygame.sprite.Group()
