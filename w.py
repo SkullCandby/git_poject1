@@ -73,9 +73,15 @@ class Persona(pygame.sprite.Sprite):
         if self.rect.x - 70 > 244:
             self.rect.x -= 70
 
+    def reachLeft(self):
+        return not self.rect.x - 70 > 244
+
     def moveRight(self):
         if self.rect.x + 70 < 691:
             self.rect.x += 70
+
+    def reachRight(self):
+        return not self.rect.x + 70 < 691
 
     def moveUp(self):
         if self.rect.y - 114 > 0:
@@ -100,44 +106,40 @@ class Ralf(Persona):
         self.set = set()
         self.v = 114
 
+    def breakWindow(self, window_status):
+       ''' if window_status == '.':
+            pygame.time.delay(100)
+        elif window_status == '%':
+            pygame.time.delay(200)
+        elif window_status == '#':
+            pygame.time.delay(400)'''
+
     def move_ralf(self):
         ralf_way = lvl[-1::-1]
         print(ralf_way)
-        for y in range(len(ralf_way)):
-            if '%' not in ralf_way[y] and '#' not in ralf_way[y]:
+        for y in range(len(ralf_way) - 1):
+            if y//2 == 0:
+                row = list(ralf_way[y])
+                z = 0
+                while not ralf.reachLeft():
+                    ralf.breakWindow(row[z])
+                    ralf.moveLeft()
+                    z += 1
+            else:
+                row = list(ralf_way[y])
+                z = 0
+                while not ralf.reachRight():
+                    ralf.breakWindow(row[z])
+                    ralf.moveRight()
+                    z += 1
+            ralf.moveUp()
+
+
+"""            if '%' not in ralf_way[y] and '#' not in ralf_way[y]:
                 self.rect.y -= self.v * clock.tick() / 1000
             if ralf_way[y].find('%') > -1 or ralf_way[y].find('#') > -1:
                 # print(ralf_way[y].find('%'), ralf_way[y].find('#'), ralf_way[y], y)
-                self.v = 0
-
-
-'''    def move_ralf(self):
-        if Ralf.move_flag:
-            for y in range(len(self.ralf_way)):
-                for x in range(len(self.ralf_way[y])):
-                    if '#' in self.ralf_way[y]:
-                        self.set.add(y)
-
-                    elif '%' in self.ralf_way[y]:
-
-                        self.set.add(y)
-        lst = list(self.set)
-        print(lst)
-        for i in range(len(lvl)):
-            while '%' not in lvl[i] and '#' not in lvl[i]:
-
-                self.rect.y -= v * clock.tick() / 1000
-        Ralf.move_flag = False'''
-
-# pygame.time.delay(100)
-'''print(load_ralf_way('ralf_map.txt'))'''
-'''class Window:
-    def __init__(self, lst, status):
-        self.lvl = lst
-        self.status = ''
-    def compile(self):
-        for i in range(len(self.lvl)):
-            for j in range(len(self.lvl[i])):'''
+                self.v = 0"""
 
 
 class Felix(Persona):
@@ -308,7 +310,7 @@ while running:
         elif keys[pygame.K_DOWN]:
             player.moveDown()
         if event.type == pygame.MOUSEBUTTONDOWN:
-            ralf.move_ralf()
+
             player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
             '''print(len(lvl_class.dd))'''
@@ -321,7 +323,7 @@ while running:
     player_group.draw(screen)
 
     ralf_sprite.draw(screen)
-
+    ralf.move_ralf()
     screen.blit(fon, (0, hh))
     camera.update(player)
     player.update()
