@@ -7,7 +7,7 @@ size = w, h = 1000, 1000
 screen = pygame.display.set_mode(size)
 v = 10
 clock = pygame.time.Clock()
-
+BULLET_TIMER = 5
 
 def load_image(name, color_key=None):
     fullname = os.path.join('data', name)
@@ -48,13 +48,26 @@ tile_images = {'r_wall': load_image('right_wall.jpg'),
                'full_window': load_image('full_okno.jpg'),
                'damaged_window': load_image('damaged_okno.jpg'),
                'nefull_window': load_image('nefull_okno.jpg'),
-               'ralf': load_image('ralf_1.png')}
+               'ralf': load_image('ralf_1.png'),
+               'bullet': load_image('bullet.jpg')}
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 
 tiles_group2 = pygame.sprite.Group()
 player_group2 = pygame.sprite.Group()
+
+bullet_group = pygame.sprite.Group()
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(bullet_group)
+        self.img = tile_images['bullet']
+        self.rect = ralf.rect
+
+    def update(self):
+        self.rect.y -= 3
 
 
 class Tile(pygame.sprite.Sprite):
@@ -64,12 +77,14 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(tile_width * pos_x + 200, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
 
-class Tile2(pygame.sprite.Sprite):
+
+'''class Tile2(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group2)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x + 200, -tile_height * pos_y)
-        self.mask = pygame.mask.from_surface(self.image)
+        self.mask = pygame.mask.from_surface(self.image)'''
+
 
 def generate_level2(level):
     ralf, x, y = None, None, None
@@ -134,18 +149,18 @@ class Ralf(Persona):
         self.v = 114
 
     def breakWindow(self, window_status):
-       ''' if window_status == '.':
-            pygame.time.delay(100)
-        elif window_status == '%':
-            pygame.time.delay(200)
-        elif window_status == '#':
-            pygame.time.delay(400)'''
+        ''' if window_status == '.':
+             pygame.time.delay(100)
+         elif window_status == '%':
+             pygame.time.delay(200)
+         elif window_status == '#':
+             pygame.time.delay(400)'''
 
     def move_ralf(self):
         ralf_way = lvl[-1::-1]
         print(ralf_way)
         for y in range(len(ralf_way) - 1):
-            if y//2 == 0:
+            if y // 2 == 0:
                 row = list(ralf_way[y])
                 z = 0
                 while not ralf.reachLeft():
@@ -161,12 +176,14 @@ class Ralf(Persona):
                     z += 1
             ralf.moveUp()
 
+    def update(self):
+        ralf.rect.x = player.rect.x - 50
 
-"""            if '%' not in ralf_way[y] and '#' not in ralf_way[y]:
-                self.rect.y -= self.v * clock.tick() / 1000
-            if ralf_way[y].find('%') > -1 or ralf_way[y].find('#') > -1:
-                # print(ralf_way[y].find('%'), ralf_way[y].find('#'), ralf_way[y], y)
-                self.v = 0"""
+    def shoot(self):
+        bullet1 = Bullet()
+        bullet2 = Bullet()
+        if pygame.sprite.spritecollide(bullet1, player_group, True) or pygame.sprite.spritecollide(bullet2, player_group, True):
+            player.hp -= 1
 
 
 class Felix(Persona):
@@ -183,7 +200,7 @@ class Felix(Persona):
                                 sheet.get_height() // rows)
         self.rect.x = x
         self.rect.y = y
-
+        self.hp = 0
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
                                 sheet.get_height() // rows)
@@ -247,20 +264,21 @@ class lvl_class:
 
 def move_lvl(main_sprite):
     rect_lst = []
-    level_x, level_y = generate_level2(load_level('ralf_map.txt'))
+    # level_x, level_y = generate_level2(load_level('ralf_map.txt'))
     for sprite in main_sprite:
         rect_lst.append(sprite.rect.y)
-        print(min(rect_lst))
         sprite.rect.y = sprite.rect.y + 114
+        pygame.time.delay(10)
         if min(rect_lst) == 1140:
             return True
-def move_lvl2(sprite_2):
+
+
+'''def move_lvl2(sprite_2):
     rect_lst = []
     level_x, level_y = generate_level2(load_level('ralf_map.txt'))
     for sprite in sprite_2:
         sprite.rect.y = sprite.rect.y + 114
-        clock.tick(60)
-
+        clock.tick(60)'''
 
 tile_width = 71
 tile_height = 114
@@ -330,13 +348,16 @@ player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 293, 615, lvl)
 camera = Camera()
 running = True
 hh = 684
-
+pygame.time.set_timer(BULLET_TIMER, 10)
 while running:
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        '''if event.type == BULLET_TIMER:
+            # ralf.shoot()
+            print(1)'''
         if keys[pygame.K_LEFT]:
             player.moveLeft()
         elif keys[pygame.K_RIGHT]:
@@ -346,7 +367,6 @@ while running:
         elif keys[pygame.K_DOWN]:
             player.moveDown()
         if event.type == pygame.MOUSEBUTTONDOWN:
-
             player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
             '''print(len(lvl_class.dd))'''
@@ -360,19 +380,21 @@ while running:
 
     ralf_sprite.draw(screen)
     ralf.move_ralf()
+    ralf.update()
     screen.blit(fon, (0, hh))
     camera.update(player)
     player.update()
+    # bullet_group.update()
     a = level.check_lvl()
     if a:
         # draw_text()
         player.next_lvl()
         move_lvl(tiles_group)
-        move_lvl2(tiles_group2)
+        # move_lvl2(tiles_group2)
         hh += 114
 
         # screen.blit(load_image('game_over.jpg'), (0, 0))
     pygame.display.flip()
 
-    # pygame.time.delay(250)
+    clock.tick(10)
 pygame.quit()
