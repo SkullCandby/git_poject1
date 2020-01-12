@@ -9,6 +9,11 @@ tile_width = 71
 tile_height = 114
 wall_width = 39
 wall_height = 112
+
+ralf_height = 50
+ralf_width = 100
+game_mode = 1  # Режим игры: 0 - подготовка, 1 - активная фаза
+
 BULLET_TIMER = 1
 
 
@@ -66,52 +71,58 @@ class Ralf(Persona):
          elif window_status == '#':
              pygame.time.delay(400)'''
 
-    def move_ralf(self):
+
+    def moveLeft(self):
+        super().moveLeft()
+        if game_mode == 1:
+            # Стреляем если в режиме обороны
+            self.shoot()
+
+
+    def moveRight(self):
+        super().moveRight()
+        if game_mode == 1:
+            # Стреляем если в режиме обороны
+            self.shoot()
+
+    def init_ralf(self):
         ralf_way = lvl[-1::-1]
-        # (ralf_way)
+        # Инициализируем уровень - Ральф пробегаем по всем окнам и ломает некоторые
         for y in range(len(ralf_way) - 1):
             if y // 2 == 0:
                 row = list(ralf_way[y])
                 z = 0
                 while not ralf.reachLeft():
                     # ralf.breakWindow(row[z])
-                    ralf.moveLeft()
+                    self.moveLeft()
                     z += 1
+                    ralf_sprite.draw(screen)
+                    clock.tick(10)
+                    pygame.display.flip()
             else:
                 row = list(ralf_way[y])
                 z = 0
                 while not ralf.reachRight():
                     # ralf.breakWindow(row[z])
-                    ralf.moveRight()
+                    self.moveRight()
                     z += 1
-            ralf.moveUp()
+                    ralf_sprite.draw(screen)
+                    clock.tick(10)
+                    pygame.display.flip()
+            self.moveUp()
+            ralf_sprite.draw(screen)
+            clock.tick(10)
+            pygame.display.flip()
+
 
     def update(self):
         ralf.rect.x = player.rect.x - 50
 
     def shoot(self):
-        if self.rect.y < 114:
-            bullet1 = Bullet()
-            bullet2 = Bullet()
-            if pygame.sprite.spritecollide(bullet1, player_group, True) or pygame.sprite.spritecollide(bullet2,
-                                                                                                       player_group,
-                                                                                                       True):
-                player.hp -= 1
-            bullet1.update()
-            bullet2.update()
-
-
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__(bullet_group)
-        self.image = pygame.transform.scale(load_image('bullet.jpg'), (20, 20))
-        self.rect = self.image.get_rect()
-        self.rect.x = ralf.rect.x
-        self.rect.y = ralf.rect.y
-
-    def update(self):
-        self.rect.y += 3
-
+        bullet1 = Bullet()
+        #bullet2 = Bullet()
+        all_sprites.add(bullet1)
+        #all_sprites.add(bullet2)
 
 class Felix(Persona):
     player_move_flag = False
@@ -162,6 +173,18 @@ class Felix(Persona):
 
     def next_lvl(self):
         player_group.empty()
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(bullet_group)
+        self.image = pygame.transform.scale(load_image('bullet.jpg'), (20, 20))
+        self.rect = self.image.get_rect()
+        self.rect.x = ralf.rect.x + int(ralf_width/2) - 10
+        self.rect.y = ralf.rect.y + ralf_height + 1
+
+    def update(self):
+        self.rect.y += 3
 
 
 class lvl_class:
@@ -324,8 +347,14 @@ hh = 684
 level = lvl_class(lvl)
 fon = load_image('earth.jpg')
 level_x, level_y, ralf = generate_level(load_level('ralf_map.txt'))
+game_mode = 0
 player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 293, 615, lvl)
-camera = Camera()
+
+all_sprites.add(ralf)
+all_sprites.add(player)
+
+#
+ralf.init_ralf()
 
 # Игровой цикл
 while running:
@@ -358,12 +387,10 @@ while running:
         ralf_sprite.draw(screen)
         # Рисуем бомбочку
         bullet_group.draw(screen)
-        ralf.shoot()
-        ralf.move_ralf()
-        ralf.update()
         screen.blit(fon, (0, hh))
-        camera.update(player)
-        player.update()
+
+        all_sprites.update()
+
         a = level.check_lvl()
         if a:
             # draw_text()
