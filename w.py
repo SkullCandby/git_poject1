@@ -2,64 +2,14 @@ import pygame
 import os
 import sys
 
-pygame.init()
+# Глобальные переменные
 size = w, h = 1000, 1000
-screen = pygame.display.set_mode(size)
 v = 10
-clock = pygame.time.Clock()
+tile_width = 71
+tile_height = 114
+wall_width = 39
+wall_height = 112
 BULLET_TIMER = 1
-
-def load_image(name, color_key=None):
-    fullname = os.path.join('data', name)
-    image = pygame.image.load(fullname).convert()
-    if color_key is not None:
-        if color_key == -1:
-            color_key = image.get_at((0, 0))
-        image.set_colorkey(color_key)
-    else:
-        image = image.convert_alpha()
-    return image
-
-
-def load_level(filename):
-    filename = "data/" + filename
-    with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    max_width = max(map(len, level_map))
-    lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[:6]
-    return lst
-
-
-'''
-def load_ralf_way(filename):
-    filename = "data/" + filename
-    with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    max_width = max(map(len, level_map))
-    lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[7:]
-    return lst
-'''
-
-ralf_sprite = pygame.sprite.Group()
-ralf_pic = load_image('mar.png')
-
-tile_images = {'r_wall': load_image('right_wall.jpg'),
-               'l_wall': load_image('left_wall.jpg'),
-               'full_window': load_image('full_okno.jpg'),
-               'damaged_window': load_image('damaged_okno.jpg'),
-               'nefull_window': load_image('nefull_okno.jpg'),
-               'ralf': load_image('ralf_1.png'),
-               'bullet': load_image('bullet.jpg')}
-tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
-all_sprites = pygame.sprite.Group()
-
-tiles_group2 = pygame.sprite.Group()
-player_group2 = pygame.sprite.Group()
-
-bullet_group = pygame.sprite.Group()
-
-
 
 
 class Tile(pygame.sprite.Sprite):
@@ -68,38 +18,6 @@ class Tile(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x + 200, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
-
-
-'''class Tile2(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(tiles_group2)
-        self.image = tile_images[tile_type]
-        self.rect = self.image.get_rect().move(tile_width * pos_x + 200, -tile_height * pos_y)
-        self.mask = pygame.mask.from_surface(self.image)'''
-
-
-'''def generate_level2(level):
-    ralf, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
-            if level[y][x] == '#':
-                Tile('nefull_window', x, y)
-            if level[y][x] == '@':
-                Tile('full_window', x, y)
-            elif level[y][x] == '|':
-                Tile('wall2', x, y)
-            elif level[y][x] == '%':
-                Tile('damaged_window', x, y)
-            elif level[y][x] == '.':
-                Tile('full_window', x, y)
-            elif level[y][x] == ')':
-                Tile('r_wall', x, y)
-            elif level[y][x] == '(':
-                Tile('l_wall', x, y)
-    return x, y'''
-
-
-lvl = load_level('ralf_map.txt')
 
 
 class Persona(pygame.sprite.Sprite):
@@ -171,20 +89,29 @@ class Ralf(Persona):
     def update(self):
         ralf.rect.x = player.rect.x - 50
 
-
+    def shoot(self):
+        if self.rect.y < 114:
+            bullet1 = Bullet()
+            bullet2 = Bullet()
+            if pygame.sprite.spritecollide(bullet1, player_group, True) or pygame.sprite.spritecollide(bullet2,
+                                                                                                       player_group,
+                                                                                                       True):
+                player.hp -= 1
+            bullet1.update()
+            bullet2.update()
 
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(bullet_group)
-        self.image = tile_images['bullet']
+        self.image = pygame.transform.scale(load_image('bullet.jpg'), (20, 20))
         self.rect = self.image.get_rect()
-
-        print(ralf.rect)
         self.rect.x = ralf.rect.x
         self.rect.y = ralf.rect.y
+
     def update(self):
         self.rect.y += 3
+
 
 class Felix(Persona):
     player_move_flag = False
@@ -201,6 +128,7 @@ class Felix(Persona):
         self.rect.x = x
         self.rect.y = y
         self.hp = 0
+
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
                                 sheet.get_height() // rows)
@@ -237,22 +165,11 @@ class Felix(Persona):
 
 
 class lvl_class:
-    lst = []
-    lst2 = lvl
-    dd = {}
 
-    def __init__(self, lvl):
-        self.lvl = lvl
+    def __init__(self, _lvl):
+        self.lvl = _lvl
         self.flag = 0
         self.counter = 0
-
-    '''def check_lvl(self, pos_x, pos_y):
-        y = pos_x // 114
-        x = pos_y - 200 // 71
-        if self.lvl[y] == '(......)' or self.lvl[y] == '(@.....)':
-            self.counter += 1
-            lvl_class.dd[x, y, self.counter] = True
-            lvl_class.lst.append(True)'''
 
     def check_lvl(self):
         stroka = ''
@@ -260,6 +177,60 @@ class lvl_class:
             stroka += self.lvl[i]
         if stroka == '(......)(......)(......)(......)(......)(@...&.)':
             return True
+
+
+class Camera:
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - w // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - h // 2)
+
+
+def load_image(name, color_key=None):
+    fullname = os.path.join('data', name)
+    image = pygame.image.load(fullname).convert()
+    if color_key is not None:
+        if color_key == -1:
+            color_key = image.get_at((0, 0))
+        image.set_colorkey(color_key)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+def start_screen():
+    global flag_screen
+    while flag_screen:
+        fon = pygame.transform.scale(load_image('menu.png'), (w, h))
+        screen.blit(fon, (0, 0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                print(event)
+                flag_screen = flag_screen and False
+        pygame.display.flip()
+
+
+def load_level(filename):
+    filename = "data/" + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[:6]
+    return lst
 
 
 def move_lvl(main_sprite):
@@ -271,20 +242,6 @@ def move_lvl(main_sprite):
         pygame.time.delay(10)
         if min(rect_lst) == 1140:
             return True
-
-
-'''def move_lvl2(sprite_2):
-    rect_lst = []
-    level_x, level_y = generate_level2(load_level('ralf_map.txt'))
-    for sprite in sprite_2:
-        sprite.rect.y = sprite.rect.y + 114
-        clock.tick(60)'''
-
-tile_width = 71
-tile_height = 114
-wall_width = 39
-wall_height = 112
-player = None
 
 
 def generate_level(level):
@@ -306,27 +263,12 @@ def generate_level(level):
             elif level[y][x] == '(':
                 Tile('l_wall', x, y)
             elif level[y][x] == '&':
-               #  print(x, y)
+                #  print(x, y)
                 Tile('full_window', x, y)
                 ralf = Ralf('ralf')
     return x, y, ralf
 
 
-class Camera:
-    def __init__(self):
-        self.dx = 0
-        self.dy = 0
-
-    def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
-
-    def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - w // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - h // 2)
-
-
-text_flag = True
 '''def draw_text():
     global text_flag
     if text_flag:
@@ -338,27 +280,60 @@ text_flag = True
         text_w = text.get_width()
         text_h = text.get_height()
         screen.blit(text, (text_x, text_y))'''
-level = lvl_class(lvl)
-fon = load_image('earth.jpg')
-level_x, level_y, ralf = generate_level(load_level('ralf_map.txt'))
 
-'''ralf_x, ralf_y = generate_ralf_way(load_ralf_way('ralf_map.txt'))'''
-'''print(ralf_x, ralf_y)'''
-player = Felix(load_image("felix_move_spritelist.png"), 2, 1, 293, 615, lvl)
-camera = Camera()
+'''
+def load_ralf_way(filename):
+    filename = "data/" + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[7:]
+    return lst
+'''
+
+pygame.init()
+screen = pygame.display.set_mode(size)
+clock = pygame.time.Clock()
+
+# Создаю словарь для используемых изображений
+tile_images = {'r_wall': load_image('right_wall.jpg'),
+               'l_wall': load_image('left_wall.jpg'),
+               'full_window': load_image('full_okno.jpg'),
+               'damaged_window': load_image('damaged_okno.jpg'),
+               'nefull_window': load_image('nefull_okno.jpg'),
+               'ralf': load_image('ralf_1.png', color_key=-1),
+               'bullet': load_image('bullet.jpg')}
+
+# Создаю спрайты: игровое поле = Дом, Ральфа, Феликса, бомбочки и спрайт для всех обьектов
+tiles_group = pygame.sprite.Group()
+ralf_sprite = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
+bullet_group = pygame.sprite.Group()
+all_sprites = pygame.sprite.Group()
+
+# Загружаю уровень игры из файла
+lvl = load_level('ralf_map.txt')
+
+# Инициализирую переменные
+flag_screen = True
+text_flag = True
 running = True
 hh = 684
 
-bullet1 = Bullet()
-bullet2 = Bullet()
-# pygame.time.set_timer(BULLET_TIMER, 1)
+# Создаю объекты игры
+level = lvl_class(lvl)
+fon = load_image('earth.jpg')
+level_x, level_y, ralf = generate_level(load_level('ralf_map.txt'))
+player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 293, 615, lvl)
+camera = Camera()
+
+# Игровой цикл
 while running:
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-
         if keys[pygame.K_LEFT]:
             player.moveLeft()
         elif keys[pygame.K_RIGHT]:
@@ -368,45 +343,35 @@ while running:
         elif keys[pygame.K_DOWN]:
             player.moveDown()
         if event.type == pygame.MOUSEBUTTONDOWN:
-
-
-            if pygame.sprite.spritecollide(bullet1, player_group, True) or pygame.sprite.spritecollide(bullet2,
-                                                                                                       player_group,
-                                                                                                       True):
-                player.hp -= 1
             player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
             '''print(len(lvl_class.dd))'''
-        # ralf.shoot()
 
     screen.fill((0, 0, 0))
-    # start_screen()
-    tiles_group.draw(screen)
-    for sprite in all_sprites:
-        camera.apply(sprite)
-    player_group.draw(screen)
-
-    ralf_sprite.draw(screen)
-    bullet_group.draw(screen)
-    ralf.move_ralf()
-    ralf.update()
-    # ralf.shoot()
-    bullet1.update()
-    bullet2.update()
-    screen.blit(fon, (0, hh))
-    camera.update(player)
-    player.update()
-    # bullet_group.update()
-    a = level.check_lvl()
-    if a:
-        # draw_text()
-        player.next_lvl()
-        move_lvl(tiles_group)
-        # move_lvl2(tiles_group2)
-        hh += 114
-
-        # screen.blit(load_image('game_over.jpg'), (0, 0))
-    pygame.display.flip()
-
-    clock.tick(10)
+    '''start_screen()'''
+    if flag_screen:
+        # Рисуем игровое поле = Дом
+        tiles_group.draw(screen)
+        # Рисуем Феликса
+        player_group.draw(screen)
+        # Рисуем  Ральфа
+        ralf_sprite.draw(screen)
+        # Рисуем бомбочку
+        bullet_group.draw(screen)
+        ralf.shoot()
+        ralf.move_ralf()
+        ralf.update()
+        screen.blit(fon, (0, hh))
+        camera.update(player)
+        player.update()
+        a = level.check_lvl()
+        if a:
+            # draw_text()
+            player.next_lvl()
+            move_lvl(tiles_group)
+            # move_lvl2(tiles_group2)
+            hh += 114
+            # screen.blit(load_image('game_over.jpg'), (0, 0))
+        clock.tick(20)
+        pygame.display.flip()
 pygame.quit()
