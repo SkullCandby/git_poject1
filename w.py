@@ -12,9 +12,21 @@ wall_height = 112
 
 ralf_height = 50
 ralf_width = 100
+ralf_follow_delay = 400
+shoot_frequency = 4000
+
 game_mode = 1  # Режим игры: 0 - подготовка, 1 - активная фаза
 
 BULLET_TIMER = 1
+
+# События по таймеру
+MOVED_LEFT = 10
+MOVED_RIGHT = 15
+MOVED_UP = 20
+MOVED_DOWN = 25
+SHOOT_ON = 30
+
+hp = 3
 
 
 class Tile(pygame.sprite.Sprite):
@@ -28,14 +40,14 @@ class Tile(pygame.sprite.Sprite):
 class Persona(pygame.sprite.Sprite):
     def moveLeft(self):
         if self.rect.x - 70 > 244:
-            self.rect.x -= 70
+            self.rect.x -= 71
 
     def reachLeft(self):
         return not self.rect.x - 70 > 244
 
     def moveRight(self):
         if self.rect.x + 70 < 691:
-            self.rect.x += 70
+            self.rect.x += 71
 
     def reachRight(self):
         return not self.rect.x + 70 < 691
@@ -55,14 +67,13 @@ class Ralf(Persona):
     def __init__(self, tile_type):
         super().__init__(ralf_sprite)
         self.image = tile_images[tile_type]
-        self.rect = self.image.get_rect().move(509, 603)
+        self.rect = self.image.get_rect().move(680, 603)
         self.ralf_way = load_level('ralf_map.txt')
         self.ralf_line = 5
         self.ralf_start_x = 5
         self.front_flag = True
         self.set = set()
         self.v = 114
-
     def breakWindow(self, window_status):
         ''' if window_status == '.':
              pygame.time.delay(100)
@@ -71,25 +82,11 @@ class Ralf(Persona):
          elif window_status == '#':
              pygame.time.delay(400)'''
 
-
-    def moveLeft(self):
-        super().moveLeft()
-        if game_mode == 1:
-            # Стреляем если в режиме обороны
-            self.shoot()
-
-
-    def moveRight(self):
-        super().moveRight()
-        if game_mode == 1:
-            # Стреляем если в режиме обороны
-            self.shoot()
-
     def init_ralf(self):
         ralf_way = lvl[-1::-1]
         # Инициализируем уровень - Ральф пробегаем по всем окнам и ломает некоторые
         for y in range(len(ralf_way) - 1):
-            if y // 2 == 0:
+            if y % 2 == 0:
                 row = list(ralf_way[y])
                 z = 0
                 while not ralf.reachLeft():
@@ -114,15 +111,23 @@ class Ralf(Persona):
             clock.tick(10)
             pygame.display.flip()
 
-
-    def update(self):
-        ralf.rect.x = player.rect.x - 50
-
     def shoot(self):
+
         bullet1 = Bullet()
-        #bullet2 = Bullet()
+        # bullet2 = Bullet()
         all_sprites.add(bullet1)
-        #all_sprites.add(bullet2)
+        # all_sprites.add(bullet2)
+        print(pygame.sprite.spritecollideany(bullet1, player_group))
+    ''' def damage(self):
+        global hp
+        if pygame.sprite.spritecollideany(bullet1, player_group):
+            hp -= 1
+'''
+
+
+'''            hp -= 1
+            print(hp)'''
+
 
 class Felix(Persona):
     player_move_flag = False
@@ -180,12 +185,11 @@ class Bullet(pygame.sprite.Sprite):
         super().__init__(bullet_group)
         self.image = pygame.transform.scale(load_image('bullet.jpg'), (20, 20))
         self.rect = self.image.get_rect()
-        self.rect.x = ralf.rect.x + int(ralf_width/2) - 10
+        self.rect.x = ralf.rect.x + int(ralf_width / 2) - 8
         self.rect.y = ralf.rect.y + ralf_height + 1
 
     def update(self):
         self.rect.y += 3
-
 
 class lvl_class:
 
@@ -348,13 +352,19 @@ level = lvl_class(lvl)
 fon = load_image('earth.jpg')
 level_x, level_y, ralf = generate_level(load_level('ralf_map.txt'))
 game_mode = 0
-player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 293, 615, lvl)
+player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 295, 615, lvl)
 
 all_sprites.add(ralf)
 all_sprites.add(player)
 
 #
+screen.fill((0, 0, 0))
+tiles_group.draw(screen)
+screen.blit(fon, (0, hh))
 ralf.init_ralf()
+game_mode = 1
+# Включаю режим стрельбы
+pygame.time.set_timer(SHOOT_ON, shoot_frequency)
 
 # Игровой цикл
 while running:
@@ -363,13 +373,39 @@ while running:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        elif event.type == MOVED_LEFT:
+            ralf.moveLeft()
+            if game_mode == 1:
+                ralf.shoot()
+            pygame.time.set_timer(MOVED_LEFT, 0)
+        elif event.type == MOVED_RIGHT:
+            ralf.moveRight()
+            if game_mode == 1:
+                ralf.shoot()
+            pygame.time.set_timer(MOVED_RIGHT, 0)
+        elif event.type == MOVED_UP:
+            if game_mode == 1:
+                ralf.shoot()
+            pygame.time.set_timer(MOVED_UP, 0)
+        elif event.type == MOVED_DOWN:
+            if game_mode == 1:
+                ralf.shoot()
+            pygame.time.set_timer(MOVED_DOWN, 0)
+        elif event.type == SHOOT_ON:
+            if game_mode == 1:
+                ralf.shoot()
+
         if keys[pygame.K_LEFT]:
             player.moveLeft()
+            pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
         elif keys[pygame.K_RIGHT]:
             player.moveRight()
-        if keys[pygame.K_UP]:
+            pygame.time.set_timer(MOVED_RIGHT, ralf_follow_delay)
+        elif keys[pygame.K_UP]:
+            pygame.time.set_timer(MOVED_UP, ralf_follow_delay)
             player.moveUp()
         elif keys[pygame.K_DOWN]:
+            pygame.time.set_timer(MOVED_DOWN, ralf_follow_delay)
             player.moveDown()
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.fix(player.rect.x, player.rect.y)
@@ -388,11 +424,11 @@ while running:
         # Рисуем бомбочку
         bullet_group.draw(screen)
         screen.blit(fon, (0, hh))
-
+        #  ralf.damage()
         all_sprites.update()
 
-        a = level.check_lvl()
-        if a:
+        lvl_check_flag = level.check_lvl()
+        if lvl_check_flag:
             # draw_text()
             player.next_lvl()
             move_lvl(tiles_group)
