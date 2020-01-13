@@ -75,12 +75,13 @@ class Ralf(Persona):
         self.set = set()
         self.v = 114
     def breakWindow(self, window_status):
-        ''' if window_status == '.':
-             pygame.time.delay(100)
-         elif window_status == '%':
-             pygame.time.delay(200)
-         elif window_status == '#':
-             pygame.time.delay(400)'''
+        window_status1 = window_status[-1::-1]
+        print(window_status1)
+        if window_status1 == '%':
+            Tile('damaged_window', ((ralf.rect.x - 200) // 71) * 71, (ralf.rect.y // 114) * 114)
+            print(((ralf.rect.x - 200) // 71) * 71, (ralf.rect.y // 114) * 114)
+        elif window_status1 == '#':
+            print(341441561)
 
     def init_ralf(self):
         ralf_way = lvl[-1::-1]
@@ -88,9 +89,10 @@ class Ralf(Persona):
         for y in range(len(ralf_way) - 1):
             if y % 2 == 0:
                 row = list(ralf_way[y])
+                row = row[-1::-1]
                 z = 0
                 while not ralf.reachLeft():
-                    # ralf.breakWindow(row[z])
+                    ralf.breakWindow(row[z])
                     self.moveLeft()
                     z += 1
                     ralf_sprite.draw(screen)
@@ -100,7 +102,7 @@ class Ralf(Persona):
                 row = list(ralf_way[y])
                 z = 0
                 while not ralf.reachRight():
-                    # ralf.breakWindow(row[z])
+                    ralf.breakWindow(row[z])
                     self.moveRight()
                     z += 1
                     ralf_sprite.draw(screen)
@@ -276,13 +278,13 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '#':
-                Tile('nefull_window', x, y)
+                Tile('damaged_window', x, y)
             if level[y][x] == '@':
                 Tile('full_window', x, y)
             elif level[y][x] == '|':
                 Tile('wall2', x, y)
             elif level[y][x] == '%':
-                Tile('damaged_window', x, y)
+                Tile('nefull_window', x, y)
             elif level[y][x] == '.':
                 Tile('full_window', x, y)
             elif level[y][x] == ')':
