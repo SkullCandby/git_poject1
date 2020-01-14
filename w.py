@@ -50,7 +50,7 @@ class Persona(pygame.sprite.Sprite):
             self.rect.x += 71
 
     def reachRight(self):
-        return not self.rect.x + 70 < 691
+        return not self.rect.x + 70 < 611
 
     def moveUp(self):
         if self.rect.y - 114 > 0:
@@ -74,41 +74,56 @@ class Ralf(Persona):
         self.front_flag = True
         self.set = set()
         self.v = 114
+
     def breakWindow(self, window_status):
-        window_status1 = window_status[-1::-1]
-        print(window_status1)
-        if window_status1 == '%':
-            Tile('damaged_window', ((ralf.rect.x - 200) // 71) * 71, (ralf.rect.y // 114) * 114)
-            print(((ralf.rect.x - 200) // 71) * 71, (ralf.rect.y // 114) * 114)
-        elif window_status1 == '#':
-            print(341441561)
+        if window_status == '%':
+            print((ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114)
+            # Tile('empty_window', (ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114)
+            '''img = load_image('nefull_okno.jpg')
+            img.blit(screen, ((ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114))'''
+            # pygame.time.delay(100000)
+        elif window_status == '#':
+            pass
 
     def init_ralf(self):
         ralf_way = lvl[-1::-1]
+        print(ralf_way)
         # Инициализируем уровень - Ральф пробегаем по всем окнам и ломает некоторые
         for y in range(len(ralf_way) - 1):
             if y % 2 == 0:
                 row = list(ralf_way[y])
+                print(row)
                 row = row[-1::-1]
                 z = 0
                 while not ralf.reachLeft():
                     ralf.breakWindow(row[z])
                     self.moveLeft()
                     z += 1
+                    screen.fill((0, 0, 0))
+                    tiles_group.draw(screen)
+                    screen.blit(fon, (0, hh))
                     ralf_sprite.draw(screen)
                     clock.tick(10)
                     pygame.display.flip()
             else:
                 row = list(ralf_way[y])
+                row = row[-1::-1]
                 z = 0
                 while not ralf.reachRight():
                     ralf.breakWindow(row[z])
                     self.moveRight()
                     z += 1
+                    screen.fill((0, 0, 0))
+
+                    tiles_group.draw(screen)
+                    screen.blit(fon, (0, hh))
                     ralf_sprite.draw(screen)
                     clock.tick(10)
                     pygame.display.flip()
             self.moveUp()
+            screen.fill((0, 0, 0))
+            tiles_group.draw(screen)
+            screen.blit(fon, (0, hh))
             ralf_sprite.draw(screen)
             clock.tick(10)
             pygame.display.flip()
@@ -119,7 +134,8 @@ class Ralf(Persona):
         # bullet2 = Bullet()
         all_sprites.add(bullet1)
         # all_sprites.add(bullet2)
-        print(pygame.sprite.spritecollideany(bullet1, player_group))
+        return bullet1
+
     ''' def damage(self):
         global hp
         if pygame.sprite.spritecollideany(bullet1, player_group):
@@ -129,7 +145,6 @@ class Ralf(Persona):
 
 '''            hp -= 1
             print(hp)'''
-
 
 class Felix(Persona):
     player_move_flag = False
@@ -146,6 +161,7 @@ class Felix(Persona):
         self.rect.x = x
         self.rect.y = y
         self.hp = 0
+        self.mask = pygame.mask.from_surface(self.image)
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
@@ -189,9 +205,10 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = ralf.rect.x + int(ralf_width / 2) - 8
         self.rect.y = ralf.rect.y + ralf_height + 1
-
+        self.mask = pygame.mask.from_surface(self.image)
     def update(self):
         self.rect.y += 3
+
 
 class lvl_class:
 
@@ -278,13 +295,41 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '#':
-                Tile('damaged_window', x, y)
+                # Tile('full_window', x, y)
+                Tile('empty_window', x, y)
             if level[y][x] == '@':
                 Tile('full_window', x, y)
             elif level[y][x] == '|':
                 Tile('wall2', x, y)
             elif level[y][x] == '%':
-                Tile('nefull_window', x, y)
+                # Tile('full_window', x, y)
+                Tile('empty_window', x, y)
+            elif level[y][x] == '.':
+                Tile('full_window', x, y)
+            elif level[y][x] == ')':
+                Tile('r_wall', x, y)
+            elif level[y][x] == '(':
+                Tile('l_wall', x, y)
+            elif level[y][x] == '&':
+                #  print(x, y)
+                Tile('full_window', x, y)
+                ralf = Ralf('ralf')
+    return x, y, ralf
+
+def generate_level2(level):
+    ralf, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '#':
+                # Tile('full_window', x, y)
+                Tile('empty_window', x, y)
+            if level[y][x] == '@':
+                Tile('full_window', x, y)
+            elif level[y][x] == '|':
+                Tile('wall2', x, y)
+            elif level[y][x] == '%':
+                # Tile('full_window', x, y)
+                Tile('empty_window', x, y)
             elif level[y][x] == '.':
                 Tile('full_window', x, y)
             elif level[y][x] == ')':
@@ -319,6 +364,12 @@ def load_ralf_way(filename):
     lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[7:]
     return lst
 '''
+def game_over():
+    global flag_screen
+    img = load_image('gameover.jpg')
+    img.blit(screen, (0, 0))
+    flag_screen = True
+    start_screen()
 
 pygame.init()
 screen = pygame.display.set_mode(size)
@@ -329,9 +380,9 @@ tile_images = {'r_wall': load_image('right_wall.jpg'),
                'l_wall': load_image('left_wall.jpg'),
                'full_window': load_image('full_okno.jpg'),
                'damaged_window': load_image('damaged_okno.jpg'),
-               'nefull_window': load_image('nefull_okno.jpg'),
+               'empty_window': load_image('nefull_okno.jpg'),
                'ralf': load_image('ralf_1.png', color_key=-1),
-               'bullet': load_image('bullet.jpg')}
+               'bullet': load_image('bullet.jpg', color_key=-1)}
 
 # Создаю спрайты: игровое поле = Дом, Ральфа, Феликса, бомбочки и спрайт для всех обьектов
 tiles_group = pygame.sprite.Group()
@@ -360,15 +411,18 @@ all_sprites.add(ralf)
 all_sprites.add(player)
 
 #
+start_screen()
 screen.fill((0, 0, 0))
 tiles_group.draw(screen)
 screen.blit(fon, (0, hh))
 ralf.init_ralf()
+
 game_mode = 1
 # Включаю режим стрельбы
 pygame.time.set_timer(SHOOT_ON, shoot_frequency)
-
+bullet1 = ralf.shoot()
 # Игровой цикл
+
 while running:
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
@@ -378,24 +432,24 @@ while running:
         elif event.type == MOVED_LEFT:
             ralf.moveLeft()
             if game_mode == 1:
-                ralf.shoot()
+                bullet1 = ralf.shoot()
             pygame.time.set_timer(MOVED_LEFT, 0)
         elif event.type == MOVED_RIGHT:
             ralf.moveRight()
             if game_mode == 1:
-                ralf.shoot()
+                bullet1 = ralf.shoot()
             pygame.time.set_timer(MOVED_RIGHT, 0)
         elif event.type == MOVED_UP:
             if game_mode == 1:
-                ralf.shoot()
+                bullet1 = ralf.shoot()
             pygame.time.set_timer(MOVED_UP, 0)
         elif event.type == MOVED_DOWN:
             if game_mode == 1:
-                ralf.shoot()
+                bullet1 = ralf.shoot()
             pygame.time.set_timer(MOVED_DOWN, 0)
         elif event.type == SHOOT_ON:
             if game_mode == 1:
-                ralf.shoot()
+                bullet1 = ralf.shoot()
 
         if keys[pygame.K_LEFT]:
             player.moveLeft()
@@ -426,6 +480,12 @@ while running:
         # Рисуем бомбочку
         bullet_group.draw(screen)
         screen.blit(fon, (0, hh))
+        block_hit_list = pygame.sprite.spritecollide(player, bullet_group, True)
+        if len(block_hit_list):
+            hp -= 1
+            print(hp)
+        if hp == 0:
+            game_over()
         #  ralf.damage()
         all_sprites.update()
 
