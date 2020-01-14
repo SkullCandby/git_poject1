@@ -368,6 +368,7 @@ def game_over():
     global running
     img = load_image('game_over.jpg')
     screen.blit(img, (0, 0))
+    running = False
 # 1
 pygame.init()
 screen = pygame.display.set_mode(size)
@@ -419,82 +420,87 @@ game_mode = 1
 # Включаю режим стрельбы
 pygame.time.set_timer(SHOOT_ON, shoot_frequency)
 bullet1 = ralf.shoot()
+menu_running = True
 # Игровой цикл
+while menu_running:
 
-while running:
-    keys = pygame.key.get_pressed()
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == MOVED_LEFT:
-            ralf.moveLeft()
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
-            pygame.time.set_timer(MOVED_LEFT, 0)
-        elif event.type == MOVED_RIGHT:
-            ralf.moveRight()
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
-            pygame.time.set_timer(MOVED_RIGHT, 0)
-        elif event.type == MOVED_UP:
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
-            pygame.time.set_timer(MOVED_UP, 0)
-        elif event.type == MOVED_DOWN:
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
-            pygame.time.set_timer(MOVED_DOWN, 0)
-        elif event.type == SHOOT_ON:
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
+    while running:
+        keys = pygame.key.get_pressed()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == MOVED_LEFT:
+                ralf.moveLeft()
+                if game_mode == 1:
+                    bullet1 = ralf.shoot()
+                pygame.time.set_timer(MOVED_LEFT, 0)
+            elif event.type == MOVED_RIGHT:
+                ralf.moveRight()
+                if game_mode == 1:
+                    bullet1 = ralf.shoot()
+                pygame.time.set_timer(MOVED_RIGHT, 0)
+            elif event.type == MOVED_UP:
+                if game_mode == 1:
+                    bullet1 = ralf.shoot()
+                pygame.time.set_timer(MOVED_UP, 0)
+            elif event.type == MOVED_DOWN:
+                if game_mode == 1:
+                    bullet1 = ralf.shoot()
+                pygame.time.set_timer(MOVED_DOWN, 0)
+            elif event.type == SHOOT_ON:
+                if game_mode == 1:
+                    bullet1 = ralf.shoot()
 
-        if keys[pygame.K_LEFT]:
-            player.moveLeft()
-            pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
-        elif keys[pygame.K_RIGHT]:
-            player.moveRight()
-            pygame.time.set_timer(MOVED_RIGHT, ralf_follow_delay)
-        elif keys[pygame.K_UP]:
-            pygame.time.set_timer(MOVED_UP, ralf_follow_delay)
-            player.moveUp()
-        elif keys[pygame.K_DOWN]:
-            pygame.time.set_timer(MOVED_DOWN, ralf_follow_delay)
-            player.moveDown()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            player.fix(player.rect.x, player.rect.y)
-            print(pygame.mouse.get_pos())
-            '''print(len(lvl_class.dd))'''
+            if keys[pygame.K_LEFT]:
+                player.moveLeft()
+                pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
+            elif keys[pygame.K_RIGHT]:
+                player.moveRight()
+                pygame.time.set_timer(MOVED_RIGHT, ralf_follow_delay)
+            elif keys[pygame.K_UP]:
+                pygame.time.set_timer(MOVED_UP, ralf_follow_delay)
+                player.moveUp()
+            elif keys[pygame.K_DOWN]:
+                pygame.time.set_timer(MOVED_DOWN, ralf_follow_delay)
+                player.moveDown()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                player.fix(player.rect.x, player.rect.y)
+                print(pygame.mouse.get_pos())
+                '''print(len(lvl_class.dd))'''
 
-    screen.fill((0, 0, 0))
-    '''start_screen()'''
-    if not flag_screen:
-        # Рисуем игровое поле = Дом
-        tiles_group.draw(screen)
-        # Рисуем Феликса
-        player_group.draw(screen)
-        # Рисуем  Ральфа
-        ralf_sprite.draw(screen)
-        # Рисуем бомбочку
-        bullet_group.draw(screen)
-        screen.blit(fon, (0, hh))
-        block_hit_list = pygame.sprite.spritecollide(player, bullet_group, True)
-        if len(block_hit_list):
-            hp -= 1
-            print(hp)
-        if hp == 0:
-            game_over()
-        #  ralf.damage()
-        all_sprites.update()
+            screen.fill((0, 0, 0))
+            '''start_screen()'''
+            if not flag_screen:
+                # Рисуем игровое поле = Дом
+                tiles_group.draw(screen)
+                # Рисуем Феликса
+                player_group.draw(screen)
+                # Рисуем  Ральфа
+                ralf_sprite.draw(screen)
+                # Рисуем бомбочку
+                bullet_group.draw(screen)
+                screen.blit(fon, (0, hh))
+                block_hit_list = pygame.sprite.spritecollide(player, bullet_group, True)
+                if len(block_hit_list):
+                    hp -= 1
+                    print(hp)
+                if hp == 0:
+                    game_over()
+                #  ralf.damage()
+                all_sprites.update()
 
-        lvl_check_flag = level.check_lvl()
-        if lvl_check_flag:
-            # draw_text()
-            player.next_lvl()
-            move_lvl(tiles_group)
-            # move_lvl2(tiles_group2)
-            hh += 114
-            # screen.blit(load_image('game_over.jpg'), (0, 0))
-        clock.tick(20)
-        pygame.display.flip()
+                lvl_check_flag = level.check_lvl()
+                if lvl_check_flag:
+                    # draw_text()
+                    player.next_lvl()
+                    move_lvl(tiles_group)
+                    # move_lvl2(tiles_group2)
+                    hh += 114
+                    # screen.blit(load_image('game_over.jpg'), (0, 0))
+                clock.tick(20)
+                pygame.display.flip()
+    clock.tick(20)
+    pygame.display.flip()
+    start_screen()
 pygame.quit()
