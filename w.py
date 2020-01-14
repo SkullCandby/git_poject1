@@ -365,11 +365,9 @@ def load_ralf_way(filename):
     return lst
 '''
 def game_over():
-    global flag_screen
-    img = load_image('gameover.jpg')
-    img.blit(screen, (0, 0))
-    flag_screen = True
-    start_screen()
+    global running
+    img = load_image('game_over.jpg')
+    screen.blit(img, (0, 0))
 
 pygame.init()
 screen = pygame.display.set_mode(size)
@@ -470,7 +468,7 @@ while running:
 
     screen.fill((0, 0, 0))
     '''start_screen()'''
-    if flag_screen:
+    if not flag_screen:
         # Рисуем игровое поле = Дом
         tiles_group.draw(screen)
         # Рисуем Феликса
