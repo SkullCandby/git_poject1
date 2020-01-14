@@ -368,7 +368,7 @@ def game_over():
     global running
     img = load_image('game_over.jpg')
     screen.blit(img, (0, 0))
-
+# 1
 pygame.init()
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
