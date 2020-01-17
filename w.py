@@ -26,7 +26,7 @@ MOVED_UP = 20
 MOVED_DOWN = 25
 SHOOT_ON = 30
 
-hp = 3
+HP = 3
 
 
 class Tile(pygame.sprite.Sprite):
@@ -160,7 +160,6 @@ class Felix(Persona):
                                 sheet.get_height() // rows)
         self.rect.x = x
         self.rect.y = y
-        self.hp = 0
         self.mask = pygame.mask.from_surface(self.image)
 
     def cut_sheet(self, sheet, columns, rows):
@@ -364,14 +363,25 @@ def load_ralf_way(filename):
     lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[7:]
     return lst
 '''
+game_over_flag = True
 def game_over():
-    global running
-    img = load_image('game_over.jpg')
+    global game_over_flag
+    img = pygame.transform.scale(load_image('game_over.jpg'), (w, h))
     screen.blit(img, (0, 0))
-    running = False
+    while game_over_flag:
 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.K_ESCAPE:
+                terminate()
+            elif event.type == pygame.K_SPACE:
+                print(event)
+                game_over_flag = game_over_flag and False
+        pygame.display.flip()
+
+
+done = True
 def menu():
-    done = True
+    global done
     while done:
         fon = pygame.transform.scale(load_image('menu.png'), (w, h))
         screen.blit(fon, (0, 0))
@@ -380,11 +390,16 @@ def menu():
                 terminate()
             elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                 print(event)
-                break
-
+                done = done and False
         pygame.display.flip()
 
-
+def restart():
+    global HP
+    ralf.rect.x, ralf.rect.y= 680, 603
+    player.rect.x, player.rect.y = 295, 615
+    bullet_group.empty()
+    ralf.init_ralf()
+    HP = 3
 # 1
 pygame.init()
 screen = pygame.display.set_mode(size)
@@ -424,7 +439,6 @@ player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 295,
 
 all_sprites.add(ralf)
 all_sprites.add(player)
-
 #
 start_screen()
 screen.fill((0, 0, 0))
@@ -464,6 +478,7 @@ while running:
         elif event.type == SHOOT_ON:
             if game_mode == 1:
                 bullet1 = ralf.shoot()
+
         if keys[pygame.K_LEFT]:
             player.moveLeft()
             pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
@@ -479,8 +494,10 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
+            '''print(len(lvl_class.dd))'''
 
-        screen.fill((0, 0, 0))
+    screen.fill((0, 0, 0))
+    if not flag_screen:
         # Рисуем игровое поле = Дом
         tiles_group.draw(screen)
         # Рисуем Феликса
@@ -492,11 +509,13 @@ while running:
         screen.blit(fon, (0, hh))
         block_hit_list = pygame.sprite.spritecollide(player, bullet_group, True)
         if len(block_hit_list):
-            hp -= 1
-            print(hp)
-        if hp == 0:
+            HP -= 1
+            print(HP)
+        if HP == 0:
+            game_over()
             menu()
-            #  ralf.damage()
+            restart()
+        #  ralf.damage()
         all_sprites.update()
 
         lvl_check_flag = level.check_lvl()
@@ -507,6 +526,7 @@ while running:
             # move_lvl2(tiles_group2)
             hh += 114
             # screen.blit(load_image('game_over.jpg'), (0, 0))
-    clock.tick(20)
-    pygame.display.flip()
+        clock.tick(20)
+        pygame.display.flip()
+
 pygame.quit()
