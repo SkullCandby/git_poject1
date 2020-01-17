@@ -146,6 +146,7 @@ class Ralf(Persona):
 '''            hp -= 1
             print(hp)'''
 
+
 class Felix(Persona):
     player_move_flag = False
 
@@ -205,6 +206,7 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x = ralf.rect.x + int(ralf_width / 2) - 8
         self.rect.y = ralf.rect.y + ralf_height + 1
         self.mask = pygame.mask.from_surface(self.image)
+
     def update(self):
         self.rect.y += 3
 
@@ -315,6 +317,7 @@ def generate_level(level):
                 ralf = Ralf('ralf')
     return x, y, ralf
 
+
 def generate_level2(level):
     ralf, x, y = None, None, None
     for y in range(len(level)):
@@ -364,22 +367,27 @@ def load_ralf_way(filename):
     return lst
 '''
 game_over_flag = True
+
+
 def game_over():
     global game_over_flag
-    img = pygame.transform.scale(load_image('game_over.jpg'), (w, h))
-    screen.blit(img, (0, 0))
     while game_over_flag:
+        fon = pygame.transform.scale(load_image('game_over.jpg'), (w, h))
+        screen.blit(fon, (0, 0))
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or event.type == pygame.K_ESCAPE:
+            print(event.type)
+            if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.K_SPACE:
+            elif event == 13:
                 print(event)
                 game_over_flag = game_over_flag and False
         pygame.display.flip()
 
 
 done = True
+
+
 def menu():
     global done
     while done:
@@ -393,13 +401,16 @@ def menu():
                 done = done and False
         pygame.display.flip()
 
+
 def restart():
     global HP
-    ralf.rect.x, ralf.rect.y= 680, 603
+    ralf.rect.x, ralf.rect.y = 680, 603
     player.rect.x, player.rect.y = 295, 615
     bullet_group.empty()
     ralf.init_ralf()
     HP = 3
+
+
 # 1
 pygame.init()
 screen = pygame.display.set_mode(size)
