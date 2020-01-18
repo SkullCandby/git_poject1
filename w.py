@@ -251,12 +251,6 @@ def load_image(name, color_key=None):
         image = image.convert_alpha()
     return image
 
-
-def terminate():
-    pygame.quit()
-    sys.exit()
-
-
 def start_screen():
     global flag_screen
     while flag_screen:
@@ -264,7 +258,8 @@ def start_screen():
         screen.blit(fon, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                terminate()
+                pygame.quit()
+                sys.exit()
             elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                 print(event)
                 flag_screen = flag_screen and False
@@ -374,14 +369,17 @@ def game_over():
     while game_over_flag:
         fon = pygame.transform.scale(load_image('game_over.jpg'), (w, h))
         screen.blit(fon, (0, 0))
-
         for event in pygame.event.get():
+            keys = pygame.key.get_pressed()
             print(event.type)
             if event.type == pygame.QUIT:
                 terminate()
-            elif event == 13:
+            elif keys[pygame.K_RETURN]:
                 print(event)
                 game_over_flag = game_over_flag and False
+            elif keys[pygame.K_ESCAPE]:
+                pygame.quit()
+                sys.exit()
         pygame.display.flip()
 
 
@@ -391,11 +389,13 @@ done = True
 def menu():
     global done
     while done:
+
         fon = pygame.transform.scale(load_image('menu.png'), (w, h))
         screen.blit(fon, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                terminate()
+                pygame.quit()
+                sys.exit()
             elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                 print(event)
                 done = done and False
@@ -404,11 +404,15 @@ def menu():
 
 def restart():
     global HP
+    global game_over_flag
+    global done
     ralf.rect.x, ralf.rect.y = 680, 603
     player.rect.x, player.rect.y = 295, 615
     bullet_group.empty()
     ralf.init_ralf()
     HP = 3
+    game_over_flag = True
+    done = True
 
 
 # 1
@@ -526,6 +530,7 @@ while running:
             game_over()
             menu()
             restart()
+
         #  ralf.damage()
         all_sprites.update()
 
