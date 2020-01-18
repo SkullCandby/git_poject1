@@ -373,7 +373,8 @@ def game_over():
             keys = pygame.key.get_pressed()
             print(event.type)
             if event.type == pygame.QUIT:
-                terminate()
+                pygame.quit()
+                sys.exit()
             elif keys[pygame.K_RETURN]:
                 print(event)
                 game_over_flag = game_over_flag and False
