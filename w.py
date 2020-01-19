@@ -77,41 +77,27 @@ class Ralf(Persona):
 
     def breakWindow(self, window_status):
         print(window_status)
-        for i in range(len(window_status)):
-            if window_status[i] == '%':
-                pass
-            elif window_status[i] == '#':
-                for i in range(4):
-                    ralf.rect.y -= 10
-                    screen.fill((0, 0, 0))
-
-                    tiles_group.draw(screen)
-                    screen.blit(fon, (0, hh))
-                    ralf_sprite.draw(screen)
-                    clock.tick(10)
-                    pygame.display.flip()
-                for j in range(4):
-                    ralf.rect.y += 10
-                    screen.fill((0, 0, 0))
-
-                    tiles_group.draw(screen)
-                    screen.blit(fon, (0, hh))
-                    ralf_sprite.draw(screen)
-                    clock.tick(10)
-                    pygame.display.flip()
+        if window_status == '%':
+            jump_ralf()
+        elif window_status == '#':
+            jump_ralf()
             # print((ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114)
 
     def init_ralf(self):
         ralf_way = lvl[-1::-1]
+        print(ralf_way)
         # Инициализируем уровень - Ральф пробегаем по всем окнам и ломает некоторые
         for y in range(len(ralf_way) - 1):
             if y % 2 == 0:
                 row = list(ralf_way[y])
+                row = row[-1::-1]
+                print(row)
                 z = 0
                 while not ralf.reachLeft():
-                    ralf.breakWindow(row)
-                    self.moveLeft()
                     z += 1
+                    ralf.breakWindow(row[z])
+                    print(ralf_way[y])
+                    self.moveLeft()
                     screen.fill((0, 0, 0))
                     tiles_group.draw(screen)
                     screen.blit(fon, (0, hh))
@@ -120,11 +106,13 @@ class Ralf(Persona):
                     pygame.display.flip()
             else:
                 row = list(ralf_way[y])
+                row = row[-1::-1]
                 z = 0
                 while not ralf.reachRight():
+                    z += 1
                     ralf.breakWindow(row[z])
                     self.moveRight()
-                    z += 1
+
                     screen.fill((0, 0, 0))
 
                     tiles_group.draw(screen)
@@ -326,33 +314,6 @@ def generate_level(level):
     return x, y, ralf
 
 
-def generate_level2(level):
-    ralf, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
-            if level[y][x] == '#':
-                # Tile('full_window', x, y)
-                Tile('empty_window', x, y)
-            if level[y][x] == '@':
-                Tile('full_window', x, y)
-            elif level[y][x] == '|':
-                Tile('wall2', x, y)
-            elif level[y][x] == '%':
-                # Tile('full_window', x, y)
-                Tile('empty_window', x, y)
-            elif level[y][x] == '.':
-                Tile('full_window', x, y)
-            elif level[y][x] == ')':
-                Tile('r_wall', x, y)
-            elif level[y][x] == '(':
-                Tile('l_wall', x, y)
-            elif level[y][x] == '&':
-                #  print(x, y)
-                Tile('full_window', x, y)
-                ralf = Ralf('ralf')
-    return x, y, ralf
-
-
 '''def draw_text():
     global text_flag
     if text_flag:
@@ -394,6 +355,27 @@ def game_over():
             elif keys[pygame.K_ESCAPE]:
                 pygame.quit()
                 sys.exit()
+        pygame.display.flip()
+
+
+def jump_ralf():
+    for i in range(4):
+        ralf.rect.y -= 10
+        screen.fill((0, 0, 0))
+
+        tiles_group.draw(screen)
+        screen.blit(fon, (0, hh))
+        ralf_sprite.draw(screen)
+        clock.tick(10)
+        pygame.display.flip()
+    for j in range(4):
+        ralf.rect.y += 10
+        screen.fill((0, 0, 0))
+
+        tiles_group.draw(screen)
+        screen.blit(fon, (0, hh))
+        ralf_sprite.draw(screen)
+        clock.tick(10)
         pygame.display.flip()
 
 
