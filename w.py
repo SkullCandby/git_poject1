@@ -76,27 +76,40 @@ class Ralf(Persona):
         self.v = 114
 
     def breakWindow(self, window_status):
-        if window_status == '%':
-            print((ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114)
-            # Tile('empty_window', (ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114)
-            '''img = load_image('nefull_okno.jpg')
-            img.blit(screen, ((ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114))'''
-            # pygame.time.delay(100000)
-        elif window_status == '#':
-            pass
+        print(window_status)
+        for i in range(len(window_status)):
+            if window_status[i] == '%':
+                pass
+            elif window_status[i] == '#':
+                for i in range(4):
+                    ralf.rect.y -= 10
+                    screen.fill((0, 0, 0))
+
+                    tiles_group.draw(screen)
+                    screen.blit(fon, (0, hh))
+                    ralf_sprite.draw(screen)
+                    clock.tick(10)
+                    pygame.display.flip()
+                for j in range(4):
+                    ralf.rect.y += 10
+                    screen.fill((0, 0, 0))
+
+                    tiles_group.draw(screen)
+                    screen.blit(fon, (0, hh))
+                    ralf_sprite.draw(screen)
+                    clock.tick(10)
+                    pygame.display.flip()
+            # print((ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114)
 
     def init_ralf(self):
         ralf_way = lvl[-1::-1]
-        print(ralf_way)
         # Инициализируем уровень - Ральф пробегаем по всем окнам и ломает некоторые
         for y in range(len(ralf_way) - 1):
             if y % 2 == 0:
                 row = list(ralf_way[y])
-                print(row)
-                row = row[-1::-1]
                 z = 0
                 while not ralf.reachLeft():
-                    ralf.breakWindow(row[z])
+                    ralf.breakWindow(row)
                     self.moveLeft()
                     z += 1
                     screen.fill((0, 0, 0))
@@ -107,7 +120,6 @@ class Ralf(Persona):
                     pygame.display.flip()
             else:
                 row = list(ralf_way[y])
-                row = row[-1::-1]
                 z = 0
                 while not ralf.reachRight():
                     ralf.breakWindow(row[z])
@@ -250,6 +262,7 @@ def load_image(name, color_key=None):
     else:
         image = image.convert_alpha()
     return image
+
 
 def start_screen():
     global flag_screen
@@ -524,6 +537,10 @@ while running:
         bullet_group.draw(screen)
         screen.blit(fon, (0, hh))
         block_hit_list = pygame.sprite.spritecollide(player, bullet_group, True)
+        '''if ralf.reachRight():
+            ralf.moveLeft()
+        elif ralf.reachLeft():
+            ralf.moveRight()'''
         if len(block_hit_list):
             HP -= 1
             print(HP)
