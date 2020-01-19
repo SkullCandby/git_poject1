@@ -26,7 +26,8 @@ MOVED_UP = 20
 MOVED_DOWN = 25
 SHOOT_ON = 30
 
-HP = 3
+HP = 111
+level_map = None
 
 
 class Tile(pygame.sprite.Sprite):
@@ -76,12 +77,35 @@ class Ralf(Persona):
         self.v = 114
 
     def breakWindow(self, window_status):
-        print(window_status)
         if window_status == '%':
             jump_ralf()
+            tile = level_map[ralf.rect.y // 114][ralf.rect.x // 71 - 2]
+            tile.image = tile_images['damaged_window']
+            screen.fill((0, 0, 0))
+            tiles_group.draw(screen)
+            screen.blit(fon, (0, hh))
+            ralf_sprite.draw(screen)
+            clock.tick(10)
+            pygame.display.flip()
         elif window_status == '#':
             jump_ralf()
-            # print((ralf.rect.x // 71) * 71 + 200, (ralf.rect.y // 114) * 114)
+            tile = level_map[ralf.rect.y // 114][ralf.rect.x // 71 - 2]
+            tile.image = tile_images['damaged_window']
+            screen.fill((0, 0, 0))
+            tiles_group.draw(screen)
+            screen.blit(fon, (0, hh))
+            ralf_sprite.draw(screen)
+            clock.tick(10)
+            pygame.display.flip()
+            jump_ralf()
+            tile = level_map[ralf.rect.y // 114][ralf.rect.x // 71 - 2]
+            tile.image = tile_images['empty_window']
+            screen.fill((0, 0, 0))
+            tiles_group.draw(screen)
+            screen.blit(fon, (0, hh))
+            ralf_sprite.draw(screen)
+            clock.tick(10)
+            pygame.display.flip()
 
     def init_ralf(self):
         ralf_way = lvl[-1::-1]
@@ -96,7 +120,6 @@ class Ralf(Persona):
                 while not ralf.reachLeft():
                     z += 1
                     ralf.breakWindow(row[z])
-                    print(ralf_way[y])
                     self.moveLeft()
                     screen.fill((0, 0, 0))
                     tiles_group.draw(screen)
@@ -106,15 +129,15 @@ class Ralf(Persona):
                     pygame.display.flip()
             else:
                 row = list(ralf_way[y])
-                row = row[-1::-1]
+
                 z = 0
                 while not ralf.reachRight():
                     z += 1
                     ralf.breakWindow(row[z])
+                    print(row)
                     self.moveRight()
 
                     screen.fill((0, 0, 0))
-
                     tiles_group.draw(screen)
                     screen.blit(fon, (0, hh))
                     ralf_sprite.draw(screen)
@@ -289,29 +312,31 @@ def move_lvl(main_sprite):
 
 def generate_level(level):
     ralf, x, y = None, None, None
+    map = []
     for y in range(len(level)):
+        l = []
         for x in range(len(level[y])):
             if level[y][x] == '#':
-                # Tile('full_window', x, y)
-                Tile('empty_window', x, y)
+                # Рисуем целое окно, которое сломает Ральф при инициализации
+                l.append(Tile('full_window', x, y))
             if level[y][x] == '@':
-                Tile('full_window', x, y)
+                l.append(Tile('full_window', x, y))
             elif level[y][x] == '|':
-                Tile('wall2', x, y)
+                l.append(Tile('wall2', x, y))
             elif level[y][x] == '%':
-                # Tile('full_window', x, y)
-                Tile('empty_window', x, y)
+                # Рисуем целое окно, которое сломает Ральф при инициализации
+                l.append(Tile('full_window', x, y))
             elif level[y][x] == '.':
-                Tile('full_window', x, y)
+                l.append(Tile('full_window', x, y))
             elif level[y][x] == ')':
-                Tile('r_wall', x, y)
+                l.append(Tile('r_wall', x, y))
             elif level[y][x] == '(':
-                Tile('l_wall', x, y)
+                l.append(Tile('l_wall', x, y))
             elif level[y][x] == '&':
-                #  print(x, y)
-                Tile('full_window', x, y)
+                l.append(Tile('full_window', x, y))
                 ralf = Ralf('ralf')
-    return x, y, ralf
+        map.append(l)
+    return x, y, ralf, map
 
 
 '''def draw_text():
@@ -345,12 +370,10 @@ def game_over():
         screen.blit(fon, (0, 0))
         for event in pygame.event.get():
             keys = pygame.key.get_pressed()
-            print(event.type)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             elif keys[pygame.K_RETURN]:
-                print(event)
                 game_over_flag = game_over_flag and False
             elif keys[pygame.K_ESCAPE]:
                 pygame.quit()
@@ -362,20 +385,18 @@ def jump_ralf():
     for i in range(4):
         ralf.rect.y -= 10
         screen.fill((0, 0, 0))
-
         tiles_group.draw(screen)
         screen.blit(fon, (0, hh))
         ralf_sprite.draw(screen)
-        clock.tick(10)
+        clock.tick(20)
         pygame.display.flip()
     for j in range(4):
         ralf.rect.y += 10
         screen.fill((0, 0, 0))
-
         tiles_group.draw(screen)
         screen.blit(fon, (0, hh))
         ralf_sprite.draw(screen)
-        clock.tick(10)
+        clock.tick(20)
         pygame.display.flip()
 
 
@@ -421,7 +442,7 @@ tile_images = {'r_wall': load_image('right_wall.jpg'),
                'l_wall': load_image('left_wall.jpg'),
                'full_window': load_image('full_okno.jpg'),
                'damaged_window': load_image('damaged_okno.jpg'),
-               'empty_window': load_image('nefull_okno.jpg'),
+               'empty_window': load_image('empty_okno.jpg'),
                'ralf': load_image('ralf_1.png', color_key=-1),
                'bullet': load_image('bullet.jpg', color_key=-1)}
 
@@ -444,7 +465,7 @@ hh = 684
 # Создаю объекты игры
 level = lvl_class(lvl)
 fon = load_image('earth.jpg')
-level_x, level_y, ralf = generate_level(load_level('ralf_map.txt'))
+level_x, level_y, ralf, level_map = generate_level(load_level('ralf_map.txt'))
 game_mode = 0
 player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 295, 615, lvl)
 
@@ -492,15 +513,15 @@ while running:
 
         if keys[pygame.K_LEFT]:
             player.moveLeft()
-            pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
+            # pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
         elif keys[pygame.K_RIGHT]:
             player.moveRight()
-            pygame.time.set_timer(MOVED_RIGHT, ralf_follow_delay)
+            # pygame.time.set_timer(MOVED_RIGHT, ralf_follow_delay)
         elif keys[pygame.K_UP]:
-            pygame.time.set_timer(MOVED_UP, ralf_follow_delay)
+            # pygame.time.set_timer(MOVED_UP, ralf_follow_delay)
             player.moveUp()
         elif keys[pygame.K_DOWN]:
-            pygame.time.set_timer(MOVED_DOWN, ralf_follow_delay)
+            # pygame.time.set_timer(MOVED_DOWN, ralf_follow_delay)
             player.moveDown()
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.fix(player.rect.x, player.rect.y)
@@ -531,7 +552,19 @@ while running:
             menu()
             restart()
 
-        #  ralf.damage()
+        # Ральф плавно следует за Феликсом
+        distance = abs((player.rect.x + player.rect.w // 2) - (ralf.rect.x + ralf.rect.w // 2))
+        if distance > 0:
+            vector = ((player.rect.x + player.rect.w // 2) - (ralf.rect.x + ralf.rect.w // 2)) / distance
+        else:
+            vector = 0
+        if distance > 20:
+            v = 20
+        else:
+            v = distance
+        ralf.rect.x += vector * v * clock.tick() / 10
+
+        # Рисует все спрайты
         all_sprites.update()
 
         lvl_check_flag = level.check_lvl()
