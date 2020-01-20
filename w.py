@@ -26,7 +26,8 @@ MOVED_UP = 20
 MOVED_DOWN = 25
 SHOOT_ON = 30
 
-HP = 111
+HP = 3
+POINTS = 0
 level_map = None
 
 
@@ -36,6 +37,13 @@ class Tile(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x + 200, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
+
+
+class Heart(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(heart_sprite)
+        self.image = load_image('heart.png', color_key=-1)
+        self.rect = self.image.get_rect().move(x, y)
 
 
 class Persona(pygame.sprite.Sprite):
@@ -107,8 +115,8 @@ class Ralf(Persona):
             clock.tick(10)
             pygame.display.flip()
 
-    def init_ralf(self):
-        ralf_way = lvl[-1::-1]
+    def init_ralf(self, lvl_ralf):
+        ralf_way = lvl_ralf[-1::-1]
         print(ralf_way)
         # Инициализируем уровень - Ральф пробегаем по всем окнам и ломает некоторые
         for y in range(len(ralf_way) - 1):
@@ -210,12 +218,14 @@ class Felix(Persona):
             s = lvl[y]
             b = s[:x] + '%' + s[x + 1:]
             lvl[y] = b
-            Tile('damaged_window', x, y)
+            tile = level_map[y][x]
+            tile.image = tile_images['damaged_window']
         elif lvl[y][x] == '%':
             s = lvl[y]
             b = s[:x] + '.' + s[x + 1:]
             lvl[y] = b
-            Tile('full_window', x, y)
+            tile = level_map[y][x]
+            tile.image = tile_images['full_window']
 
     def next_lvl(self):
         player_group.empty()
@@ -305,13 +315,14 @@ def move_lvl(main_sprite):
     for sprite in main_sprite:
         rect_lst.append(sprite.rect.y)
         sprite.rect.y = sprite.rect.y + 114
-        pygame.time.delay(10)
+        clock.tick(100)
+        pygame.display.flip()
         if min(rect_lst) == 1140:
             return True
 
 
 def generate_level(level):
-    ralf, x, y = None, None, None
+    x, y = None, None
     map = []
     for y in range(len(level)):
         l = []
@@ -334,9 +345,8 @@ def generate_level(level):
                 l.append(Tile('l_wall', x, y))
             elif level[y][x] == '&':
                 l.append(Tile('full_window', x, y))
-                ralf = Ralf('ralf')
         map.append(l)
-    return x, y, ralf, map
+    return x, y, map
 
 
 '''def draw_text():
@@ -423,11 +433,19 @@ def restart():
     global HP
     global game_over_flag
     global done
+    global level_map
+    level_x, level_y, level_map = generate_level(load_level('ralf_map.txt'))
     ralf.rect.x, ralf.rect.y = 680, 603
     player.rect.x, player.rect.y = 295, 615
     bullet_group.empty()
-    ralf.init_ralf()
+    ralf.init_ralf(load_level('ralf_map.txt'))
     HP = 3
+    heart1 = Heart(860, 0)
+    heart_lst.append(heart1)
+    heart2 = Heart(916, 0)
+    heart_lst.append(heart2)
+    heart3 = Heart(972, 0)
+    heart_lst.append(heart3)
     game_over_flag = True
     done = True
 
@@ -452,10 +470,10 @@ ralf_sprite = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
-
+heart_sprite = pygame.sprite.Group()
 # Загружаю уровень игры из файла
 lvl = load_level('ralf_map.txt')
-
+heart_lst = []
 # Инициализирую переменные
 flag_screen = True
 text_flag = True
@@ -465,10 +483,10 @@ hh = 684
 # Создаю объекты игры
 level = lvl_class(lvl)
 fon = load_image('earth.jpg')
-level_x, level_y, ralf, level_map = generate_level(load_level('ralf_map.txt'))
+level_x, level_y, level_map = generate_level(load_level('ralf_map.txt'))
 game_mode = 0
 player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 295, 615, lvl)
-
+ralf = Ralf('ralf')
 all_sprites.add(ralf)
 all_sprites.add(player)
 #
@@ -476,12 +494,18 @@ start_screen()
 screen.fill((0, 0, 0))
 tiles_group.draw(screen)
 screen.blit(fon, (0, hh))
-ralf.init_ralf()
-
+ralf.init_ralf(load_level('ralf_map.txt'))
 game_mode = 1
 # Включаю режим стрельбы
 pygame.time.set_timer(SHOOT_ON, shoot_frequency)
 bullet1 = ralf.shoot()
+heart1 = Heart(860, 0)
+heart_lst.append(heart1)
+heart2 = Heart(916, 0)
+heart_lst.append(heart2)
+heart3 = Heart(972, 0)
+heart_lst.append(heart3)
+print(heart_lst)
 # Игровой цикл
 while running:
     keys = pygame.key.get_pressed()
@@ -532,6 +556,7 @@ while running:
     if not flag_screen:
         # Рисуем игровое поле = Дом
         tiles_group.draw(screen)
+        heart_sprite.draw(screen)
         # Рисуем Феликса
         player_group.draw(screen)
         # Рисуем  Ральфа
@@ -546,6 +571,8 @@ while running:
             ralf.moveRight()'''
         if len(block_hit_list):
             HP -= 1
+            heart_lst[0].kill()
+            del heart_lst[0]
             print(HP)
         if HP == 0:
             game_over()
