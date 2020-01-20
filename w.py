@@ -31,8 +31,8 @@ SHOOT_ON = 30
 HP = 3
 POINTS = 0
 level_map = None
-
-
+SHOOT_FLAG = True
+NAME_FLAG = False
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group)
@@ -162,12 +162,13 @@ class Ralf(Persona):
             pygame.display.flip()
 
     def shoot(self):
-
-        bullet1 = Bullet()
-        # bullet2 = Bullet()
-        all_sprites.add(bullet1)
-        # all_sprites.add(bullet2)
-        return bullet1
+        global SHOOT_FLAG
+        if SHOOT_FLAG:
+            bullet1 = Bullet()
+            # bullet2 = Bullet()
+            all_sprites.add(bullet1)
+            # all_sprites.add(bullet2)
+            return bullet1
 
     ''' def damage(self):
         global hp
@@ -354,7 +355,7 @@ def generate_level(level):
     return x, y, map
 
 
-'''def draw_text():
+def draw_text():
     global text_flag
     if text_flag:
         screen.fill((0, 0, 0))
@@ -364,17 +365,8 @@ def generate_level(level):
         text_y = h // 2 - text.get_height() // 2
         text_w = text.get_width()
         text_h = text.get_height()
-        screen.blit(text, (text_x, text_y))'''
+        screen.blit(text, (text_x, text_y))
 
-'''
-def load_ralf_way(filename):
-    filename = "data/" + filename
-    with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    max_width = max(map(len, level_map))
-    lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[7:]
-    return lst
-'''
 game_over_flag = True
 
 
@@ -552,12 +544,16 @@ while running:
         elif event.type == SHOOT_ON:
             if game_mode == 1:
                 bullet1 = ralf.shoot()
-        if event.type == KEYDOWN:
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == KEYDOWN and NAME_FLAG:
             if event.unicode.isalpha():
                 name += event.unicode
             elif event.key == K_BACKSPACE:
                 name = name[:-1]
             elif event.key == K_RETURN:
+                print(name)
                 name = ""
         if keys[pygame.K_LEFT]:
             player.moveLeft()
@@ -629,8 +625,8 @@ while running:
     if lvl_check_flag:
         # draw_text()
         player.next_lvl()
-
+        SHOOT_FLAG = SHOOT_FLAG and False
+        NAME_FLAG = True
     pygame.display.flip()
     milliseconds += clock.tick_busy_loop(60)
-    print(name)
 pygame.quit()
