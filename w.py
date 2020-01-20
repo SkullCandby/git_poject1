@@ -1,6 +1,8 @@
 import pygame
 import os
 import sys
+import sqlite3
+from pygame.locals import *
 
 # Глобальные переменные
 size = w, h = 1000, 1000
@@ -211,16 +213,19 @@ class Felix(Persona):
         # Felix.player_move_flag = False
 
     def fix(self, pos_x, pos_y):
+        global POINTS
         lvl = self.lvl
         x = (pos_x - 200) // 71
         y = pos_y // 114
         if lvl[y][x] == '#':
+            POINTS += 100
             s = lvl[y]
             b = s[:x] + '%' + s[x + 1:]
             lvl[y] = b
             tile = level_map[y][x]
             tile.image = tile_images['damaged_window']
         elif lvl[y][x] == '%':
+            POINTS += 100
             s = lvl[y]
             b = s[:x] + '.' + s[x + 1:]
             lvl[y] = b
@@ -446,6 +451,9 @@ def restart():
     heart_lst.append(heart2)
     heart3 = Heart(972, 0)
     heart_lst.append(heart3)
+    minutes = 0
+    seconds = 0
+    milliseconds = 0
     game_over_flag = True
     done = True
 
@@ -462,7 +470,7 @@ tile_images = {'r_wall': load_image('right_wall.jpg'),
                'damaged_window': load_image('damaged_okno.jpg'),
                'empty_window': load_image('empty_okno.jpg'),
                'ralf': load_image('ralf_1.png', color_key=-1),
-               'bullet': load_image('bullet.jpg', color_key=-1)}
+               'bullet': load_image('bullet.png', color_key=-1)}
 
 # Создаю спрайты: игровое поле = Дом, Ральфа, Феликса, бомбочки и спрайт для всех обьектов
 tiles_group = pygame.sprite.Group()
@@ -499,14 +507,24 @@ game_mode = 1
 # Включаю режим стрельбы
 pygame.time.set_timer(SHOOT_ON, shoot_frequency)
 bullet1 = ralf.shoot()
+
+# Инициализация жизнией на экране в виде сердец
 heart1 = Heart(860, 0)
 heart_lst.append(heart1)
 heart2 = Heart(916, 0)
 heart_lst.append(heart2)
 heart3 = Heart(972, 0)
 heart_lst.append(heart3)
-print(heart_lst)
+
+# подключение к базе данных
+con = sqlite3.connect('ralf_base.db')
+cur = con.cursor()
+name = ""
+minutes = 0
+seconds = 0
+milliseconds = 0
 # Игровой цикл
+myfont = pygame.font.SysFont("monospace", 25)
 while running:
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
@@ -534,7 +552,13 @@ while running:
         elif event.type == SHOOT_ON:
             if game_mode == 1:
                 bullet1 = ralf.shoot()
-
+        if event.type == KEYDOWN:
+            if event.unicode.isalpha():
+                name += event.unicode
+            elif event.key == K_BACKSPACE:
+                name = name[:-1]
+            elif event.key == K_RETURN:
+                name = ""
         if keys[pygame.K_LEFT]:
             player.moveLeft()
             # pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
@@ -550,59 +574,63 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.fix(player.rect.x, player.rect.y)
             print(pygame.mouse.get_pos())
-            '''print(len(lvl_class.dd))'''
+        '''if event.unicode.isalpha():
+            name += event.unicode
+        elif event.key == K_BACKSPACE:
+            name = name[:-1]'''
 
     screen.fill((0, 0, 0))
-    if not flag_screen:
-        # Рисуем игровое поле = Дом
-        tiles_group.draw(screen)
-        heart_sprite.draw(screen)
-        # Рисуем Феликса
-        player_group.draw(screen)
-        # Рисуем  Ральфа
-        ralf_sprite.draw(screen)
-        # Рисуем бомбочку
-        bullet_group.draw(screen)
-        screen.blit(fon, (0, hh))
-        block_hit_list = pygame.sprite.spritecollide(player, bullet_group, True)
-        '''if ralf.reachRight():
-            ralf.moveLeft()
-        elif ralf.reachLeft():
-            ralf.moveRight()'''
-        if len(block_hit_list):
-            HP -= 1
-            heart_lst[0].kill()
-            del heart_lst[0]
-            print(HP)
-        if HP == 0:
-            game_over()
-            menu()
-            restart()
+    if milliseconds > 1000:
+        seconds += 1
+        milliseconds -= 1000
+    if seconds > 60:
+        minutes += 1
+        seconds -= 60
+    timelabel = myfont.render(f'{minutes}: {seconds}', True, (255, 0, 0))
+    screen.blit(timelabel, (0, 0))
+    # Рисуем игровое поле = Дом
+    tiles_group.draw(screen)
+    heart_sprite.draw(screen)
+    # Рисуем Феликса
+    player_group.draw(screen)
+    # Рисуем  Ральфа
+    ralf_sprite.draw(screen)
+    # Рисуем бомбочку
+    bullet_group.draw(screen)
+    screen.blit(fon, (0, hh))
+    block_hit_list = pygame.sprite.spritecollide(player, bullet_group, True)
+    if len(block_hit_list):
+        HP -= 1
+        heart_lst[0].kill()
+        del heart_lst[0]
+        POINTS -= 50
+        print(HP)
+    if HP == 0:
+        game_over()
+        menu()
+        restart()
 
-        # Ральф плавно следует за Феликсом
-        distance = abs((player.rect.x + player.rect.w // 2) - (ralf.rect.x + ralf.rect.w // 2))
-        if distance > 0:
-            vector = ((player.rect.x + player.rect.w // 2) - (ralf.rect.x + ralf.rect.w // 2)) / distance
-        else:
-            vector = 0
-        if distance > 20:
-            v = 20
-        else:
-            v = distance
-        ralf.rect.x += vector * v * clock.tick() / 10
+    # Ральф плавно следует за Феликсом
+    distance = abs((player.rect.x + player.rect.w // 2) - (ralf.rect.x + ralf.rect.w // 2))
+    if distance > 0:
+        vector = ((player.rect.x + player.rect.w // 2) - (ralf.rect.x + ralf.rect.w // 2)) / distance
+    else:
+        vector = 0
+    if distance > 20:
+        v = 20
+    else:
+        v = distance
+    ralf.rect.x += vector * v * clock.tick() / 10
 
-        # Рисует все спрайты
-        all_sprites.update()
+    # Рисует все спрайты
+    all_sprites.update()
 
-        lvl_check_flag = level.check_lvl()
-        if lvl_check_flag:
-            # draw_text()
-            player.next_lvl()
-            move_lvl(tiles_group)
-            # move_lvl2(tiles_group2)
-            hh += 114
-            # screen.blit(load_image('game_over.jpg'), (0, 0))
-        clock.tick(20)
-        pygame.display.flip()
+    lvl_check_flag = level.check_lvl()
+    if lvl_check_flag:
+        # draw_text()
+        player.next_lvl()
 
+    pygame.display.flip()
+    milliseconds += clock.tick_busy_loop(60)
+    print(name)
 pygame.quit()
