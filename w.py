@@ -359,6 +359,10 @@ def draw_text():
     if text_flag:
         font = pygame.font.Font(None, 50)
         text = font.render(f"{name}", 1, (0, 0, 0))
+        print(text.get_rect())
+        if text.get_rect().x > 573:
+             name = name[len(name) - 2]
+        # if text.get_width()
         text_x = w // 2 - text.get_width() // 2
         text_y = h // 2 - text.get_height() // 2
         text_w = text.get_width()
