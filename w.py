@@ -17,7 +17,7 @@ ralf_width = 100
 ralf_follow_delay = 400
 shoot_frequency = 4000
 
-game_mode = 1  # Режим игры: 0 - подготовка, 1 - активная фаза
+game_mode = 1  # Режим игры: 0 - пассивная фаза, 1 - активная фаза
 
 BULLET_TIMER = 1
 
@@ -31,7 +31,6 @@ SHOOT_ON = 30
 HP = 3
 POINTS = 0
 level_map = None
-SHOOT_FLAG = True
 NAME_FLAG = False
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
@@ -162,8 +161,8 @@ class Ralf(Persona):
             pygame.display.flip()
 
     def shoot(self):
-        global SHOOT_FLAG
-        if SHOOT_FLAG:
+        global game_mode
+        if game_mode == 1:
             bullet1 = Bullet()
             # bullet2 = Bullet()
             all_sprites.add(bullet1)
@@ -356,17 +355,21 @@ def generate_level(level):
 
 
 def draw_text():
-    global text_flag
+    global name
     if text_flag:
-        screen.fill((0, 0, 0))
         font = pygame.font.Font(None, 50)
-        text = font.render("Уровень 1, сложность 2", 1, (100, 255, 100))
+        text = font.render(f"{name}", 1, (0, 0, 0))
         text_x = w // 2 - text.get_width() // 2
         text_y = h // 2 - text.get_height() // 2
         text_w = text.get_width()
         text_h = text.get_height()
-        screen.blit(text, (text_x, text_y))
-
+        pygame.draw.rect(screen, (0, 0, 0), (357, 255,
+                                                   253, 176))
+        pygame.draw.rect(screen, (128, 128, 128), (394, 313,
+                                               183, 63))
+        pygame.draw.rect(screen, (51, 51, 51), (394, 313,
+                                                   183, 63), 5)
+        screen.blit(text, (407, 339))
 game_over_flag = True
 
 
@@ -553,7 +556,9 @@ while running:
             elif event.key == K_BACKSPACE:
                 name = name[:-1]
             elif event.key == K_RETURN:
-                print(name)
+                score = POINTS // (minutes * 60 + seconds)
+                cur.execute('''INSERT INTO scores(name, score) VALUES(?, ?)''', (name, score))
+                con.commit()
                 name = ""
         if keys[pygame.K_LEFT]:
             player.moveLeft()
@@ -624,9 +629,11 @@ while running:
     lvl_check_flag = level.check_lvl()
     if lvl_check_flag:
         # draw_text()
+        game_mode = 0
         player.next_lvl()
-        SHOOT_FLAG = SHOOT_FLAG and False
         NAME_FLAG = True
+        draw_text()
     pygame.display.flip()
-    milliseconds += clock.tick_busy_loop(60)
+    if game_mode == 1:
+        milliseconds += clock.tick_busy_loop(60)
 pygame.quit()
