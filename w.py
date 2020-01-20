@@ -623,7 +623,7 @@ while running:
         v = distance
     ralf.rect.x += vector * v * clock.tick() / 10
 
-    # Рисует все спрайты
+    #Рисует все спрайты
     all_sprites.update()
 
     lvl_check_flag = level.check_lvl()
