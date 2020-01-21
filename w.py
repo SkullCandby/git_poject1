@@ -565,7 +565,6 @@ heart_lst.append(heart3)
 # Игровой цикл
 myfont = pygame.font.SysFont("monospace", 25)
 names = []
-# в этом списке храняться все имена и их лучшие колличество очков
 
 while running:
     keys = pygame.key.get_pressed()
@@ -622,18 +621,24 @@ while running:
                 restart()
         if keys[pygame.K_LEFT]:
             player.moveLeft()
+            clock.tick(20)
+            pygame.display.flip()
             # pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
         elif keys[pygame.K_RIGHT]:
             player.moveRight()
-            clock.tick(2)
+            clock.tick(20)
             pygame.display.flip()
             # pygame.time.set_timer(MOVED_RIGHT, ralf_follow_delay)
         elif keys[pygame.K_UP]:
             # pygame.time.set_timer(MOVED_UP, ralf_follow_delay)
             player.moveUp()
+            clock.tick(20)
+            pygame.display.flip()
         elif keys[pygame.K_DOWN]:
             # pygame.time.set_timer(MOVED_DOWN, ralf_follow_delay)
             player.moveDown()
+            clock.tick(20)
+            pygame.display.flip()
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.fix(player.rect.x, player.rect.y)
         '''if event.unicode.isalpha():
@@ -696,6 +701,8 @@ while running:
         NAME_FLAG = True
         draw_text()
         done = True
+    score_txt = myfont.render(f"score:{POINTS}", 1, (255, 0, 0))
+    screen.blit(score_txt, (100, 0))
     pygame.display.flip()
     if game_mode == 1:
         milliseconds += clock.tick_busy_loop(60)
