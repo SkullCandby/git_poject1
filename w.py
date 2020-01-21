@@ -3,7 +3,7 @@ import os
 import sys
 import sqlite3
 from pygame.locals import *
-
+from operator import itemgetter
 # Глобальные переменные
 size = w, h = 1000, 1000
 v = 10
@@ -32,6 +32,8 @@ HP = 3
 POINTS = 0
 level_map = None
 NAME_FLAG = False
+
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group)
@@ -118,13 +120,11 @@ class Ralf(Persona):
 
     def init_ralf(self, lvl_ralf):
         ralf_way = lvl_ralf[-1::-1]
-        print(ralf_way)
         # Инициализируем уровень - Ральф пробегаем по всем окнам и ломает некоторые
         for y in range(len(ralf_way) - 1):
             if y % 2 == 0:
                 row = list(ralf_way[y])
                 row = row[-1::-1]
-                print(row)
                 z = 0
                 while not ralf.reachLeft():
                     z += 1
@@ -143,7 +143,6 @@ class Ralf(Persona):
                 while not ralf.reachRight():
                     z += 1
                     ralf.breakWindow(row[z])
-                    print(row)
                     self.moveRight()
 
                     screen.fill((0, 0, 0))
@@ -239,7 +238,7 @@ class Felix(Persona):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(bullet_group)
-        self.image = pygame.transform.scale(load_image('bullet.jpg'), (20, 20))
+        self.image = pygame.transform.scale(load_image('bullet.png'), (20, 20))
         self.rect = self.image.get_rect()
         self.rect.x = ralf.rect.x + int(ralf_width / 2) - 8
         self.rect.y = ralf.rect.y + ralf_height + 1
@@ -289,22 +288,6 @@ def load_image(name, color_key=None):
         image = image.convert_alpha()
     return image
 
-
-def start_screen():
-    global flag_screen
-    while flag_screen:
-        fon = pygame.transform.scale(load_image('menu.png'), (w, h))
-        screen.blit(fon, (0, 0))
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                print(event)
-                flag_screen = flag_screen and False
-        pygame.display.flip()
-
-
 def load_level(filename):
     filename = "data/" + filename
     with open(filename, 'r') as mapFile:
@@ -312,18 +295,6 @@ def load_level(filename):
     max_width = max(map(len, level_map))
     lst = list(map(lambda x: x.ljust(max_width, '.'), level_map))[:6]
     return lst
-
-
-def move_lvl(main_sprite):
-    rect_lst = []
-    # level_x, level_y = generate_level2(load_level('ralf_map.txt'))
-    for sprite in main_sprite:
-        rect_lst.append(sprite.rect.y)
-        sprite.rect.y = sprite.rect.y + 114
-        clock.tick(100)
-        pygame.display.flip()
-        if min(rect_lst) == 1140:
-            return True
 
 
 def generate_level(level):
@@ -359,21 +330,37 @@ def draw_text():
     if text_flag:
         font = pygame.font.Font(None, 50)
         text = font.render(f"{name}", 1, (0, 0, 0))
-        print(text.get_rect())
         if text.get_rect().x > 573:
-             name = name[len(name) - 2]
+            name = name[len(name) - 2]
         # if text.get_width()
         text_x = w // 2 - text.get_width() // 2
         text_y = h // 2 - text.get_height() // 2
         text_w = text.get_width()
         text_h = text.get_height()
         pygame.draw.rect(screen, (0, 0, 0), (357, 255,
-                                                   253, 176))
+                                             253, 176))
         pygame.draw.rect(screen, (128, 128, 128), (394, 313,
-                                               183, 63))
+                                                   183, 63))
         pygame.draw.rect(screen, (51, 51, 51), (394, 313,
-                                                   183, 63), 5)
+                                                183, 63), 5)
         screen.blit(text, (407, 339))
+
+def blit_text(surface, text, pos, font, color=pygame.Color('white')):
+    words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
+    space = font.size(' ')[0]  # The width of a space.
+    max_width, max_height = surface.get_size()
+    x, y = pos
+    for line in words:
+        for word in line:
+            word_surface = font.render(word, 0, color)
+            word_width, word_height = word_surface.get_size()
+            if x + word_width >= max_width:
+                x = pos[0]  # Reset the x.
+                y += word_height  # Start on new row.
+            surface.blit(word_surface, (x, y))
+            x += word_width + space
+        x = pos[0]  # Reset the x.
+        y += word_height  # Start on new row.
 game_over_flag = True
 
 
@@ -416,20 +403,50 @@ def jump_ralf():
 
 done = True
 
+lvl = None
 
-def menu():
+
+def menu(_names):
+    global lvl
     global done
-    while done:
+    _names.sort(key=itemgetter(1))
+    _names.reverse()
+    _names = _names[:10]
+    txt = ''
+    for i in range(len(_names)):
+        if i == 9:
+            txt += f'   {i + 1}  {_names[i][0]}      {_names[i][1]} \n'
+            break
+        txt += f'   {i + 1}    {_names[i][0]}      {_names[i][1]} \n'
+    font = pygame.font.Font(None, 50)
+    placemant_txt = font.render("place name     score", 1, (255, 255, 255))
+    places = font.render(txt, 1, (255, 255, 255))
 
+    print(txt)
+    while done:
         fon = pygame.transform.scale(load_image('menu.png'), (w, h))
         screen.blit(fon, (0, 0))
+        screen.blit(placemant_txt, (280, 134))
+        blit_text(screen, txt, (280, 174), font)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                print(event)
-                done = done and False
+                coords = pygame.mouse.get_pos()
+                print(coords)
+                if coords[0] >= 820 and coords[0] <= 971:
+                    if coords[1] >= 275 and coords[1] <= 380:
+                        done = done and False
+                        lvl = load_level('ralf_map.txt')
+                    if coords[1] >= 408 and coords[1] <= 512:
+                        done = done and False
+                        print(123)
+                        lvl = load_level('ralf_map2.txt')
+                        print(lvl)
+                    if coords[1] >= 550 and coords[1] <= 651:
+                        done = done and False
+                        lvl = load_level('ralf_map3.txt')
         pygame.display.flip()
 
 
@@ -438,11 +455,29 @@ def restart():
     global game_over_flag
     global done
     global level_map
-    level_x, level_y, level_map = generate_level(load_level('ralf_map.txt'))
+    global NAME_FLAG
+    global game_mode
+    global minutes
+    global seconds
+    global milliseconds
+    global lvl
+    global text_flag
+    global level
+    global heart1
+    global heart2
+    global heart3
+    global player
+    global heart_lst
+    heart_lst = []
+    heart_sprite.empty()
+    player.next_lvl()
+    level_x, level_y, level_map = generate_level(lvl)
+    level = lvl_class(lvl)
     ralf.rect.x, ralf.rect.y = 680, 603
     player.rect.x, player.rect.y = 295, 615
+    player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 295, 615, lvl)
     bullet_group.empty()
-    ralf.init_ralf(load_level('ralf_map.txt'))
+    ralf.init_ralf(lvl)
     HP = 3
     heart1 = Heart(860, 0)
     heart_lst.append(heart1)
@@ -455,6 +490,9 @@ def restart():
     milliseconds = 0
     game_over_flag = True
     done = True
+    NAME_FLAG = NAME_FLAG and False
+    text_flag = False
+    game_mode = 1
 
 
 # 1
@@ -479,29 +517,37 @@ bullet_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 heart_sprite = pygame.sprite.Group()
 # Загружаю уровень игры из файла
-lvl = load_level('ralf_map.txt')
+
 heart_lst = []
 # Инициализирую переменные
 flag_screen = True
 text_flag = True
 running = True
 hh = 684
-
+# подключение к базе данных
+con = sqlite3.connect('ralf_base.db')
+cur = con.cursor()
+name = ""
+minutes = 0
+seconds = 0
+milliseconds = 0
+names_and_scores = cur.execute('''SELECT * FROM scores WHERE score > 0 ''').fetchall()
 # Создаю объекты игры
+menu(names_and_scores)
 level = lvl_class(lvl)
 fon = load_image('earth.jpg')
-level_x, level_y, level_map = generate_level(load_level('ralf_map.txt'))
+level_x, level_y, level_map = generate_level(lvl)
 game_mode = 0
 player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 295, 615, lvl)
 ralf = Ralf('ralf')
 all_sprites.add(ralf)
 all_sprites.add(player)
 #
-start_screen()
+
 screen.fill((0, 0, 0))
 tiles_group.draw(screen)
 screen.blit(fon, (0, hh))
-ralf.init_ralf(load_level('ralf_map.txt'))
+ralf.init_ralf(lvl)
 game_mode = 1
 # Включаю режим стрельбы
 pygame.time.set_timer(SHOOT_ON, shoot_frequency)
@@ -515,17 +561,15 @@ heart_lst.append(heart2)
 heart3 = Heart(972, 0)
 heart_lst.append(heart3)
 
-# подключение к базе данных
-con = sqlite3.connect('ralf_base.db')
-cur = con.cursor()
-name = ""
-minutes = 0
-seconds = 0
-milliseconds = 0
+
 # Игровой цикл
 myfont = pygame.font.SysFont("monospace", 25)
+names = []
+# в этом списке храняться все имена и их лучшие колличество очков
+
 while running:
     keys = pygame.key.get_pressed()
+    names_and_scores = cur.execute('''SELECT * FROM scores WHERE score > 0 ''').fetchall()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -557,18 +601,32 @@ while running:
         if event.type == KEYDOWN and NAME_FLAG:
             if event.unicode.isalpha():
                 name += event.unicode
+                if len(name) > 6:
+                    name = name[:6]
             elif event.key == K_BACKSPACE:
                 name = name[:-1]
             elif event.key == K_RETURN:
                 score = POINTS // (minutes * 60 + seconds)
-                cur.execute('''INSERT INTO scores(name, score) VALUES(?, ?)''', (name, score))
+                for i in range(len(names_and_scores)):
+                    names.append(names_and_scores[i][0])
+                if name not in names:
+                    cur.execute('''INSERT INTO scores(name, score) VALUES(?, ?)''', (name, score))
+                elif name in names and cur.execute('''SELECT score FROM scores WHERE name == ?''', (name,)).fetchall()[0][0] < POINTS:
+                    cur.execute('''UPDATE scores
+                                SET score = ?
+                                WHERE name = ? ''', (score, name))
                 con.commit()
                 name = ""
+                menu(names_and_scores)
+                print(lvl)
+                restart()
         if keys[pygame.K_LEFT]:
             player.moveLeft()
             # pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
         elif keys[pygame.K_RIGHT]:
             player.moveRight()
+            clock.tick(2)
+            pygame.display.flip()
             # pygame.time.set_timer(MOVED_RIGHT, ralf_follow_delay)
         elif keys[pygame.K_UP]:
             # pygame.time.set_timer(MOVED_UP, ralf_follow_delay)
@@ -578,7 +636,6 @@ while running:
             player.moveDown()
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.fix(player.rect.x, player.rect.y)
-            print(pygame.mouse.get_pos())
         '''if event.unicode.isalpha():
             name += event.unicode
         elif event.key == K_BACKSPACE:
@@ -609,10 +666,10 @@ while running:
         heart_lst[0].kill()
         del heart_lst[0]
         POINTS -= 50
-        print(HP)
+        print(heart_lst)
     if HP == 0:
         game_over()
-        menu()
+        menu(names_and_scores)
         restart()
 
     # Ральф плавно следует за Феликсом
@@ -627,7 +684,7 @@ while running:
         v = distance
     ralf.rect.x += vector * v * clock.tick() / 10
 
-    #Рисует все спрайты
+    # Рисует все спрайты
     all_sprites.update()
 
     lvl_check_flag = level.check_lvl()
@@ -635,8 +692,10 @@ while running:
         # draw_text()
         game_mode = 0
         player.next_lvl()
+        text_flag = True
         NAME_FLAG = True
         draw_text()
+        done = True
     pygame.display.flip()
     if game_mode == 1:
         milliseconds += clock.tick_busy_loop(60)
