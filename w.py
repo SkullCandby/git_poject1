@@ -90,7 +90,7 @@ class Ralf(Persona):
 
     def breakWindow(self, window_status):
         if window_status == '%':
-            jump_ralf()
+            ralf.jump_ralf()
             tile = level_map[ralf.rect.y // 114][ralf.rect.x // 71 - 2]
             tile.image = tile_images['damaged_window']
             screen.fill((0, 0, 0))
@@ -100,7 +100,7 @@ class Ralf(Persona):
             clock.tick(10)
             pygame.display.flip()
         elif window_status == '#':
-            jump_ralf()
+            ralf.jump_ralf()
             tile = level_map[ralf.rect.y // 114][ralf.rect.x // 71 - 2]
             tile.image = tile_images['damaged_window']
             screen.fill((0, 0, 0))
@@ -109,7 +109,7 @@ class Ralf(Persona):
             ralf_sprite.draw(screen)
             clock.tick(10)
             pygame.display.flip()
-            jump_ralf()
+            ralf.jump_ralf()
             tile = level_map[ralf.rect.y // 114][ralf.rect.x // 71 - 2]
             tile.image = tile_images['empty_window']
             screen.fill((0, 0, 0))
@@ -160,6 +160,24 @@ class Ralf(Persona):
             clock.tick(10)
             pygame.display.flip()
 
+    def jump_ralf(self):
+        for i in range(4):
+            self.rect.y -= 10
+            screen.fill((0, 0, 0))
+            tiles_group.draw(screen)
+            screen.blit(fon, (0, hh))
+            ralf_sprite.draw(screen)
+            clock.tick(20)
+            pygame.display.flip()
+        for j in range(4):
+            self.rect.y += 10
+            screen.fill((0, 0, 0))
+            tiles_group.draw(screen)
+            screen.blit(fon, (0, hh))
+            ralf_sprite.draw(screen)
+            clock.tick(20)
+            pygame.display.flip()
+
     def shoot(self):
         global game_mode
         if game_mode == 1:
@@ -185,6 +203,10 @@ class Felix(Persona):
         self.rect.x = x
         self.rect.y = y
         self.mask = pygame.mask.from_surface(self.image)
+
+    def moveUp(self):
+        if self.rect.y - 114 > 114:
+            super().moveUp()
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
@@ -338,8 +360,8 @@ def draw_text():
 
 
 def blit_text(surface, text, pos, font, color=pygame.Color('white')):
-    words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
-    space = font.size(' ')[0]  # The width of a space.
+    words = [word.split(' ') for word in text.splitlines()]  # 2х уровнеый массив где каждая строка это список слов
+    space = font.size(' ')[0]  # Ширина пробела
     max_width, max_height = surface.get_size()
     x, y = pos
     for line in words:
@@ -347,12 +369,12 @@ def blit_text(surface, text, pos, font, color=pygame.Color('white')):
             word_surface = font.render(word, 0, color)
             word_width, word_height = word_surface.get_size()
             if x + word_width >= max_width:
-                x = pos[0]  # Reset the x.
-                y += word_height  # Start on new row.
+                x = pos[0]  # Переопределяем х.
+                y += word_height  # Начало новой строки.
             surface.blit(word_surface, (x, y))
             x += word_width + space
-        x = pos[0]  # Reset the x.
-        y += word_height  # Start on new row.
+        x = pos[0]  # Переставляем х.
+        y += word_height  # Начало на новой строке.
 
 
 game_over_flag = True
@@ -379,49 +401,37 @@ def game_over():
         pygame.display.flip()
 
 
-def jump_ralf():
-    for i in range(4):
-        ralf.rect.y -= 10
-        screen.fill((0, 0, 0))
-        tiles_group.draw(screen)
-        screen.blit(fon, (0, hh))
-        ralf_sprite.draw(screen)
-        clock.tick(20)
-        pygame.display.flip()
-    for j in range(4):
-        ralf.rect.y += 10
-        screen.fill((0, 0, 0))
-        tiles_group.draw(screen)
-        screen.blit(fon, (0, hh))
-        ralf_sprite.draw(screen)
-        clock.tick(20)
-        pygame.display.flip()
-
-
 done = True
 lvl = None
 
 
+# Прорисовываю экран начального меню
 def menu():
     global lvl
     global done
-    _names = cur.execute('''SELECT * FROM scores WHERE score > 0 ''').fetchall()
+
+    # Запускаю музыку
+    pygame.mixer.music.load('zero.wav')
+    pygame.mixer.music.play(-1)
+
+    # Формирую таблицу лучших 10 результатов
+    _names = cur.execute('''SELECT * FROM scores WHERE score > 0 ''').fetchall()  # Выборка из базы
     _names.sort(key=itemgetter(1))
     _names.reverse()
     _names = _names[:10]
     score_txt = ''
     name_txt = ''
     place_txt = ''
-    pygame.mixer.music.load('zero.wav')
-    pygame.mixer.music.play(-1)
-    for i in range(len(_names)):
+
+    for i in range(len(_names)):  # Наполняю списки
         name_txt += f'{_names[i][0]}\n'
         score_txt += f'{_names[i][1]}\n'
         place_txt += f'{i + 1}\n'
     font = pygame.font.Font(None, 50)
-    placemant_txt = font.render("#    name         score", 1, (255, 255, 255))
+    placemant_txt = font.render("#    name         score", 1, (255, 255, 255))  # А это заголовок таблицы результатов
 
     while done:
+        # Вывожу таблицу результатов
         fon = pygame.transform.scale(load_image('menu.png'), (w, h))
         screen.blit(fon, (0, 0))
         screen.blit(placemant_txt, (320, 250))
@@ -429,11 +439,12 @@ def menu():
         blit_text(screen, score_txt, (550, 300), font)
         blit_text(screen, place_txt, (320, 300), font)
 
+        # Жду от пользователя выбор уровня
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 coords = pygame.mouse.get_pos()
                 print(coords)
                 if coords[0] >= 820 and coords[0] <= 971:
@@ -451,6 +462,7 @@ def menu():
         pygame.display.flip()
 
 
+# Перезапускаю игру и выставляю начальные установки
 def restart():
     global HP
     global game_over_flag
@@ -498,7 +510,7 @@ def restart():
     game_mode = 1
 
 
-# 1
+# Начало
 pygame.init()
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
@@ -571,6 +583,7 @@ heart_lst.append(heart3)
 myfont = pygame.font.SysFont("monospace", 25)
 names = []
 
+# Основной игровой цикл
 while running:
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
