@@ -378,6 +378,7 @@ def game_over():
             elif keys[pygame.K_RETURN]:
                 game_over_flag = game_over_flag and False
             elif keys[pygame.K_ESCAPE]:
+                con.close()
                 pygame.quit()
                 sys.exit()
         pygame.display.flip()
@@ -424,6 +425,7 @@ def menu():
         # Жду от пользователя выбор уровня
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                con.close()
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -570,14 +572,12 @@ while running:
     keys = pygame.key.get_pressed()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            con.close()
             pygame.quit()
             sys.exit()
         elif event.type == SHOOT_ON:
             if game_mode == 1:
                 bullet1 = ralf.shoot()
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
         if event.type == KEYDOWN and NAME_FLAG:
             if event.unicode.isalpha():
                 name += event.unicode
