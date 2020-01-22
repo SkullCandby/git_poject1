@@ -1,4 +1,4 @@
-import pygame
+import pygame, pygame.mixer
 import os
 import sys
 import sqlite3
@@ -412,22 +412,24 @@ def menu(_names):
     _names.sort(key=itemgetter(1))
     _names.reverse()
     _names = _names[:10]
-    txt = ''
+    score_txt = ''
+    name_txt = ''
+    place_txt = ''
     for i in range(len(_names)):
-        if i == 9:
-            txt += f'   {i + 1}  {_names[i][0]}      {_names[i][1]} \n'
-            break
-        txt += f'   {i + 1}    {_names[i][0]}      {_names[i][1]} \n'
+        name_txt += f'{_names[i][0]}\n'
+        score_txt += f'{_names[i][1]}\n'
+        place_txt += f'{i + 1}\n'
     font = pygame.font.Font(None, 50)
-    placemant_txt = font.render("place name     score", 1, (255, 255, 255))
-    places = font.render(txt, 1, (255, 255, 255))
+    placemant_txt = font.render("#    name         score", 1, (255, 255, 255))
 
-    print(txt)
     while done:
         fon = pygame.transform.scale(load_image('menu.png'), (w, h))
         screen.blit(fon, (0, 0))
         screen.blit(placemant_txt, (280, 134))
-        blit_text(screen, txt, (280, 174), font)
+        blit_text(screen, name_txt, (337, 174), font)
+        blit_text(screen, score_txt, (508, 174), font)
+        blit_text(screen, place_txt, (280, 174), font)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -542,7 +544,7 @@ player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 295,
 ralf = Ralf('ralf')
 all_sprites.add(ralf)
 all_sprites.add(player)
-#
+# Добавляю звуки
 
 screen.fill((0, 0, 0))
 tiles_group.draw(screen)
@@ -702,7 +704,7 @@ while running:
         draw_text()
         done = True
     score_txt = myfont.render(f"score:{POINTS}", 1, (255, 0, 0))
-    screen.blit(score_txt, (100, 0))
+    screen.blit(score_txt, (0, 25))
     pygame.display.flip()
     if game_mode == 1:
         milliseconds += clock.tick_busy_loop(60)
