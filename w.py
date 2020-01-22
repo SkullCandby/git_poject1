@@ -255,9 +255,9 @@ class Bullet(pygame.sprite.Sprite):
         super().__init__(bullet_group)
         self.image = pygame.transform.scale(load_image('bullet.png'), (20, 20))
         self.rect = self.image.get_rect()
+        # Позиционирует вылет пули по центру низа Ральфа
         self.rect.x = ralf.rect.x + int(ralf_width / 2) - 8
         self.rect.y = ralf.rect.y + ralf_height + 1
-        self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
         self.rect.y += 3
@@ -270,26 +270,13 @@ class lvl_class:
         self.flag = 0
         self.counter = 0
 
+    # Проверяет закончился уровень или нет
     def check_lvl(self):
         stroka = ''
         for i in range(len(self.lvl)):
             stroka += self.lvl[i]
         if stroka == '(......)(......)(......)(......)(......)(@...&.)':
             return True
-
-
-class Camera:
-    def __init__(self):
-        self.dx = 0
-        self.dy = 0
-
-    def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
-
-    def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - w // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - h // 2)
 
 
 def load_image(name, color_key=None):
@@ -313,6 +300,7 @@ def load_level(filename):
     return lst
 
 
+# Рисует основное игровое поле (дом)
 def generate_level(level):
     x, y = None, None
     map = []
@@ -341,18 +329,12 @@ def generate_level(level):
     return x, y, map
 
 
+# Выводит окно для ввода имени игрока
 def draw_text():
     global name
     if text_flag:
         font = pygame.font.Font(None, 50)
         text = font.render(f"{name}", 1, (0, 0, 0))
-        if text.get_rect().x > 573:
-            name = name[len(name) - 2]
-        # if text.get_width()
-        text_x = w // 2 - text.get_width() // 2
-        text_y = h // 2 - text.get_height() // 2
-        text_w = text.get_width()
-        text_h = text.get_height()
         pygame.draw.rect(screen, (0, 0, 0), (357, 255, 253, 176))
         pygame.draw.rect(screen, (128, 128, 128), (394, 313, 183, 63))
         pygame.draw.rect(screen, (51, 51, 51), (394, 313, 183, 63), 5)
@@ -590,24 +572,6 @@ while running:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        elif event.type == MOVED_LEFT:
-            ralf.moveLeft()
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
-            pygame.time.set_timer(MOVED_LEFT, 0)
-        elif event.type == MOVED_RIGHT:
-            ralf.moveRight()
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
-            pygame.time.set_timer(MOVED_RIGHT, 0)
-        elif event.type == MOVED_UP:
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
-            pygame.time.set_timer(MOVED_UP, 0)
-        elif event.type == MOVED_DOWN:
-            if game_mode == 1:
-                bullet1 = ralf.shoot()
-            pygame.time.set_timer(MOVED_DOWN, 0)
         elif event.type == SHOOT_ON:
             if game_mode == 1:
                 bullet1 = ralf.shoot()
@@ -641,28 +605,20 @@ while running:
             player.moveLeft()
             clock.tick(20)
             pygame.display.flip()
-            # pygame.time.set_timer(MOVED_LEFT, ralf_follow_delay)
         elif keys[pygame.K_RIGHT]:
             player.moveRight()
             clock.tick(20)
             pygame.display.flip()
-            # pygame.time.set_timer(MOVED_RIGHT, ralf_follow_delay)
         elif keys[pygame.K_UP]:
-            # pygame.time.set_timer(MOVED_UP, ralf_follow_delay)
             player.moveUp()
             clock.tick(20)
             pygame.display.flip()
         elif keys[pygame.K_DOWN]:
-            # pygame.time.set_timer(MOVED_DOWN, ralf_follow_delay)
             player.moveDown()
             clock.tick(20)
             pygame.display.flip()
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN or keys[pygame.K_SPACE]:
             player.fix(player.rect.x, player.rect.y)
-        '''if event.unicode.isalpha():
-            name += event.unicode
-        elif event.key == K_BACKSPACE:
-            name = name[:-1]'''
 
     screen.fill((0, 0, 0))
     if milliseconds > 1000:
@@ -671,7 +627,7 @@ while running:
     if seconds > 60:
         minutes += 1
         seconds -= 60
-    timelabel = myfont.render(f'{minutes}: {seconds}', True, (255, 0, 0))
+    timelabel = myfont.render(f'{minutes}:{seconds}', True, (255, 0, 0))
     screen.blit(timelabel, (0, 0))
     # Рисуем игровое поле = Дом
     tiles_group.draw(screen)
