@@ -4,6 +4,7 @@ import sys
 import sqlite3
 from pygame.locals import *
 from operator import itemgetter
+
 # Глобальные переменные
 size = w, h = 1000, 1000
 v = 10
@@ -168,16 +169,6 @@ class Ralf(Persona):
             # all_sprites.add(bullet2)
             return bullet1
 
-    ''' def damage(self):
-        global hp
-        if pygame.sprite.spritecollideany(bullet1, player_group):
-            hp -= 1
-'''
-
-
-'''            hp -= 1
-            print(hp)'''
-
 
 class Felix(Persona):
     player_move_flag = False
@@ -217,6 +208,7 @@ class Felix(Persona):
         x = (pos_x - 200) // 71
         y = pos_y // 114
         if lvl[y][x] == '#':
+            fix_sound.play()
             POINTS += 100
             s = lvl[y]
             b = s[:x] + '%' + s[x + 1:]
@@ -224,6 +216,7 @@ class Felix(Persona):
             tile = level_map[y][x]
             tile.image = tile_images['damaged_window']
         elif lvl[y][x] == '%':
+            fix_sound.play()
             POINTS += 100
             s = lvl[y]
             b = s[:x] + '.' + s[x + 1:]
@@ -288,6 +281,7 @@ def load_image(name, color_key=None):
         image = image.convert_alpha()
     return image
 
+
 def load_level(filename):
     filename = "data/" + filename
     with open(filename, 'r') as mapFile:
@@ -337,13 +331,11 @@ def draw_text():
         text_y = h // 2 - text.get_height() // 2
         text_w = text.get_width()
         text_h = text.get_height()
-        pygame.draw.rect(screen, (0, 0, 0), (357, 255,
-                                             253, 176))
-        pygame.draw.rect(screen, (128, 128, 128), (394, 313,
-                                                   183, 63))
-        pygame.draw.rect(screen, (51, 51, 51), (394, 313,
-                                                183, 63), 5)
+        pygame.draw.rect(screen, (0, 0, 0), (357, 255, 253, 176))
+        pygame.draw.rect(screen, (128, 128, 128), (394, 313, 183, 63))
+        pygame.draw.rect(screen, (51, 51, 51), (394, 313, 183, 63), 5)
         screen.blit(text, (407, 339))
+
 
 def blit_text(surface, text, pos, font, color=pygame.Color('white')):
     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
@@ -361,17 +353,22 @@ def blit_text(surface, text, pos, font, color=pygame.Color('white')):
             x += word_width + space
         x = pos[0]  # Reset the x.
         y += word_height  # Start on new row.
+
+
 game_over_flag = True
 
 
 def game_over():
     global game_over_flag
+    pygame.mixer.music.load('game_over_music.wav')
+    pygame.mixer.music.play(1)
     while game_over_flag:
         fon = pygame.transform.scale(load_image('game_over.jpg'), (w, h))
         screen.blit(fon, (0, 0))
         for event in pygame.event.get():
             keys = pygame.key.get_pressed()
             if event.type == pygame.QUIT:
+                con.close()
                 pygame.quit()
                 sys.exit()
             elif keys[pygame.K_RETURN]:
@@ -402,19 +399,21 @@ def jump_ralf():
 
 
 done = True
-
 lvl = None
 
 
-def menu(_names):
+def menu():
     global lvl
     global done
+    _names = cur.execute('''SELECT * FROM scores WHERE score > 0 ''').fetchall()
     _names.sort(key=itemgetter(1))
     _names.reverse()
     _names = _names[:10]
     score_txt = ''
     name_txt = ''
     place_txt = ''
+    pygame.mixer.music.load('zero.wav')
+    pygame.mixer.music.play(-1)
     for i in range(len(_names)):
         name_txt += f'{_names[i][0]}\n'
         score_txt += f'{_names[i][1]}\n'
@@ -425,10 +424,10 @@ def menu(_names):
     while done:
         fon = pygame.transform.scale(load_image('menu.png'), (w, h))
         screen.blit(fon, (0, 0))
-        screen.blit(placemant_txt, (280, 134))
-        blit_text(screen, name_txt, (337, 174), font)
-        blit_text(screen, score_txt, (508, 174), font)
-        blit_text(screen, place_txt, (280, 174), font)
+        screen.blit(placemant_txt, (320, 250))
+        blit_text(screen, name_txt, (370, 300), font)
+        blit_text(screen, score_txt, (550, 300), font)
+        blit_text(screen, place_txt, (320, 300), font)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -470,6 +469,7 @@ def restart():
     global heart3
     global player
     global heart_lst
+    global POINTS
     heart_lst = []
     heart_sprite.empty()
     player.next_lvl()
@@ -481,6 +481,7 @@ def restart():
     bullet_group.empty()
     ralf.init_ralf(lvl)
     HP = 3
+    POINTS = 0
     heart1 = Heart(860, 0)
     heart_lst.append(heart1)
     heart2 = Heart(916, 0)
@@ -533,9 +534,13 @@ name = ""
 minutes = 0
 seconds = 0
 milliseconds = 0
-names_and_scores = cur.execute('''SELECT * FROM scores WHERE score > 0 ''').fetchall()
+
+# Инициирую звуки
+hurt_sound = pygame.mixer.Sound('hit.wav')
+fix_sound = pygame.mixer.Sound('fix_sound.wav')
+
 # Создаю объекты игры
-menu(names_and_scores)
+menu()
 level = lvl_class(lvl)
 fon = load_image('earth.jpg')
 level_x, level_y, level_map = generate_level(lvl)
@@ -544,7 +549,6 @@ player = Felix(load_image("felix_move_spritelist.png", color_key=-1), 2, 1, 295,
 ralf = Ralf('ralf')
 all_sprites.add(ralf)
 all_sprites.add(player)
-# Добавляю звуки
 
 screen.fill((0, 0, 0))
 tiles_group.draw(screen)
@@ -563,14 +567,12 @@ heart_lst.append(heart2)
 heart3 = Heart(972, 0)
 heart_lst.append(heart3)
 
-
 # Игровой цикл
 myfont = pygame.font.SysFont("monospace", 25)
 names = []
 
 while running:
     keys = pygame.key.get_pressed()
-    names_and_scores = cur.execute('''SELECT * FROM scores WHERE score > 0 ''').fetchall()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -606,20 +608,21 @@ while running:
                     name = name[:6]
             elif event.key == K_BACKSPACE:
                 name = name[:-1]
-            elif event.key == K_RETURN:
+            elif event.key == K_RETURN and game_mode == 0:
+                names_and_scores = cur.execute('''SELECT * FROM scores WHERE score > 0 ''').fetchall()
                 score = POINTS // (minutes * 60 + seconds)
                 for i in range(len(names_and_scores)):
                     names.append(names_and_scores[i][0])
                 if name not in names:
                     cur.execute('''INSERT INTO scores(name, score) VALUES(?, ?)''', (name, score))
-                elif name in names and cur.execute('''SELECT score FROM scores WHERE name == ?''', (name,)).fetchall()[0][0] < POINTS:
+                elif name in names and \
+                        cur.execute('''SELECT score FROM scores WHERE name == ?''', (name,)).fetchall()[0][0] < POINTS:
                     cur.execute('''UPDATE scores
                                 SET score = ?
                                 WHERE name = ? ''', (score, name))
                 con.commit()
                 name = ""
-                menu(names_and_scores)
-                print(lvl)
+                menu()
                 restart()
         if keys[pygame.K_LEFT]:
             player.moveLeft()
@@ -669,6 +672,7 @@ while running:
     screen.blit(fon, (0, hh))
     block_hit_list = pygame.sprite.spritecollide(player, bullet_group, True)
     if len(block_hit_list):
+        hurt_sound.play()
         HP -= 1
         heart_lst[0].kill()
         del heart_lst[0]
@@ -676,7 +680,7 @@ while running:
         print(heart_lst)
     if HP == 0:
         game_over()
-        menu(names_and_scores)
+        menu()
         restart()
 
     # Ральф плавно следует за Феликсом
